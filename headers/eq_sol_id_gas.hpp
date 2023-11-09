@@ -4,19 +4,15 @@
 
 void initial_conditions(std::string test_numbr, double& ro_l,\
                         double& v_l,double& p_l,double& ro_r,\
-                        double& v_r,double& p_r,double& t, \
-                        double& gamma);
+                        double& v_r,double& p_r,double& t);
 
-int check_configuration(double ro_l, double v_l,double p_l,double ro_r,\
-                         double v_r,double p_r,double gamma,double& c_l, double& c_r);
+double sound_speed(double density, double pressure);
 
-double Newton_method (double ro_l, double v_l,double p_l, double c_l,\
-                      double ro_r, double v_r,double p_r, double c_r,\
-                      double gamma, int conf_state, int& res_state);
+double max_speed(double density, double velocity, double pressure);
 
-double fun_p(double x, double ro_l, double v_l,double p_l, double c_l,\
-                      double ro_r, double v_r,double p_r, double c_r,\
-                      double gamma, int state);
+void compute_fluxes(double density_L, double velocity_L, double pressure_L,
+                    double density_R, double velocity_R, double pressure_R,
+                    double &flux_density, double &flux_momentum, double &flux_energy);
 
 double der_fun_p(double x, double ro_l, double v_l,double p_l, double c_l,\
                       double ro_r, double v_r,double p_r, double c_r,\
