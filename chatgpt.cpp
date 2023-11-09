@@ -5,66 +5,6 @@ HLL метода для одномерных уравнений газодина
 должны будете расширить код для решения всей задачи.
 */
 
-#include <iostream>
-#include <vector>
-#include <cmath>
-
-const double gamma = 5.0 / 3.0;
-const double tol = 1e-6;
-
-// Функция для вычисления скорости звука
-double sound_speed(double density, double pressure) {
-    return std::sqrt(gamma * pressure / density);
-}
-
-// Функция для вычисления максимальной скорости
-double max_speed(double density, double velocity, double pressure) {
-    return std::max(std::fabs(velocity), sound_speed(density, pressure));
-}
-
-// Функция для вычисления потоков через грани ячейки
-void compute_fluxes(double density_L, double velocity_L, double pressure_L,
-                    double density_R, double velocity_R, double pressure_R,
-                    double &flux_density, double &flux_momentum, double &flux_energy) {
-    double sound_speed_L = sound_speed(density_L, pressure_L);
-    double sound_speed_R = sound_speed(density_R, pressure_R);
-    
-    double p_star = 0.5 * (pressure_L + pressure_R - 
-                    density_L * velocity_L * sound_speed_L - 
-                    density_R * velocity_R * sound_speed_R) / 
-                    (0.5 * (sound_speed_L + sound_speed_R));
-    
-    if (p_star <= 0.0) {
-        p_star = tol;
-    }
-    
-    double v_star = 0.5 * (velocity_L + velocity_R + 
-                    (pressure_L - pressure_R) / 
-                    (density_L * sound_speed_L + density_R * sound_speed_R));
-    
-    double rho_star = 0.5 * (density_L + density_R);
-    
-    if (v_star >= 0.0) {
-        flux_density = density_L * velocity_L;
-        flux_momentum = density_L * velocity_L * velocity_L + pressure_L;
-        flux_energy = velocity_L * (density_L * (pressure_L + density_L * velocity_L * velocity_L) / (density_L * pressure_L));
-    } else {
-        flux_density = density_R * velocity_R;
-        flux_momentum = density_R * velocity_R * velocity_R + pressure_R;
-        flux_energy = velocity_R * (density_R * (pressure_R + density_R * velocity_R * velocity_R) / (density_R * pressure_R));
-    }
-    
-    if (v_star > 0.0) {
-        flux_density += p_star - pressure_L;
-        flux_momentum += (p_star + density_L * v_star * v_star) * v_star - density_L * velocity_L * (v_star - velocity_L);
-        flux_energy += v_star * (p_star + density_L * v_star * v_star);
-    } else {
-        flux_density += p_star - pressure_R;
-        flux_momentum += (p_star + density_R * v_star * v_star) * v_star - density_R * velocity_R * (v_star - velocity_R);
-        flux_energy += v_star * (p_star + density_R * v_star * v_star);
-    }
-}
-
 int main() {
     // Задаем начальные условия
     double x_min = -0.5;
