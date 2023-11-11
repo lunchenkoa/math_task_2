@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <vector>
 #include <cmath>
 #include <algorithm>
 
@@ -10,19 +9,16 @@ using namespace std;
 
 // const double tol = 1e-6;
 
-// а нужна ли эта функция вообще? я ничего не понимаю...
-void set_initial_values (double* DENS, double* VEL, double* PRES, int zero_index, double** arr) // expecting vectors RHO, V, P and N_0, u0
+void set_initial_values (double* DENS, double* VEL, double* PRES, int LR_sep, double** arr, int array_length) // expecting vectors RHO, V, P and N_0, u0
 {
-    int array_length = sizeof(DENS) / sizeof(DENS[0]);
-
-    for (int i = 0; i <= zero_index; ++i)
+    for (size_t i = 0; i < LR_sep; ++i) // for L-part
     {
         DENS[i] = arr[0][0];
         VEL[i] = arr[1][0];
         PRES[i] = arr[2][0];
     }
 
-    for (int i = zero_index + 1; i < array_length; ++i)
+    for (size_t i = LR_sep; i < array_length; ++i) // for R-part
     {
         DENS[i] = arr[0][1];
         VEL[i] = arr[1][1];
@@ -30,16 +26,19 @@ void set_initial_values (double* DENS, double* VEL, double* PRES, int zero_index
     }
 }
 
-void real2u_or_F (double* DENS, double* VEL, double* PRES, double** arr, double adiabat, bool is_arr_u)
+// conversion of individual gas features into vector ones, namely u and F
+void feats2vectors (double* DENS, double* VEL, double* PRES, double** arr, double adiabat, bool is_arr_u, int array_length)
 {
-    int array_length = sizeof(arr) / sizeof(arr[0]);
-
     if (is_arr_u)
     {
         for (int i = 0; i < array_length; ++i)
         {
             arr[i][0] = DENS[i];
             arr[i][1] = DENS[i] * VEL[i];
+            // equation closing the system:
+            //     p = ρε(γ-1), i.e. ε = p / (ρ(γ-1)),
+            // therefore, the 3d component of the vector u:
+            //     ρ(ε + v^2 / 2) = p / (γ-1) + ρv^2 / 2.
             arr[i][2] = PRES[i] / (adiabat - 1) + DENS[i] * pow(VEL[i], 2) / 2;
         }
     }
@@ -49,149 +48,120 @@ void real2u_or_F (double* DENS, double* VEL, double* PRES, double** arr, double 
         {
             arr[i][0] = DENS[i] * VEL[i];
             arr[i][1] = DENS[i] * pow(VEL[i], 2) + PRES[i];
-            arr[i][2] = VEL[i] * (PRES[i] / (adiabat - 1) + PRES[i] + DENS[i] * pow(VEL[i], 2) / 2);
+            // similarly, the 3d component of the vector F:
+            //     ρv(ε + v^2 / 2 + p / ρ) = pv / (γ-1) + ρv^3 / 2 + pv.
+            arr[i][2] = PRES[i] * VEL[i] / (adiabat - 1) + DENS[i] * pow(VEL[i], 3) / 2 + PRES[i] * VEL[i];
+            // arr[i][2] = VEL[i] * (PRES[i] / (adiabat - 1) + PRES[i] + DENS[i] * pow(VEL[i], 2) / 2); // daniel... хз почему у него такая формула
         }
     }
 }
 
-void u2real (double* DENS, double* VEL, double* PRES, double** arr, double adiabat) // expect arr = u
-{
-    int array_length = sizeof(arr) / sizeof(arr[0]);
-
-    for (size_t i = 1; i <= array_length; ++i)
-    {
-        DENS[i] = arr[i][1];
-    }
-
+// inverse transformation of vector characteristics of gas into individual features, namely rho, v, p
+void vectors2feats (double* DENS, double* VEL, double* PRES, double** arr, double adiabat, int array_length)
+{   // expect arr = u
     for (size_t i = 0; i < array_length; ++i)
     {
-        VEL[i] = arr[i][2] / DENS[i];
-        PRES[i] = (arr[i][3] - DENS[i] * pow(VEL[i], 2) / 2) * (adiabat - 1);
+        DENS[i] = arr[i][0];
+        VEL[i] = arr[i][1] / DENS[i];
+        PRES[i] = (arr[i][2] - DENS[i] * pow(VEL[i], 2) / 2) * (adiabat - 1);
     }
 }
 
-// Функция для вычисления скорости звука
-double sound_speed (double DENS, double PRES, double adiabat)
+double sound_speed (double density, double pressure, double adiabat)
 {
-    return sqrt(adiabat * PRES / DENS);
+    return sqrt(adiabat * pressure / density);
 }
 
-double vmax (double** arr, double adiabat) // expect arr = u
-{
-    double v_max = -1.0;
-    int array_length = sizeof(arr) / sizeof(arr[0]);
+double* speed_estimates(double adiabat, double** u_init) 
+{   
+    double sound_vel_L = sound_speed(u_init[0][0], u_init[0][2], adiabat);
+    double sound_vel_R = sound_speed(u_init[1][0], u_init[1][2], adiabat);
 
-    double * RHO1 = create_vector(array_length);
-    double * V1 = create_vector(array_length);
-    double * P1 = create_vector(array_length);
+    // determine the propagation speed
+    double * D = create_vector(2);   
+    D[0] = min(u_init[0][1], u_init[1][1]) - max(sound_vel_L, sound_vel_R); 
+    D[1] = max(u_init[0][1], u_init[1][1]) + max(sound_vel_L, sound_vel_R); 
 
-    u2real(RHO1, V1, P1, arr, adiabat);
-
-    for (size_t i = 1; i <= array_length - 2; ++i)
-    {
-        double c = sound_speed(RHO1[i], P1[i], adiabat);
-        v_max = max(v_max, abs(V1[i]) + c);
-    }
-
-    free_vector(RHO1);
-    free_vector(V1);
-    free_vector(P1);
-
-    return v_max;
-}
-
-// // Функция для вычисления максимальной скорости
-// double* speed_estimates(double* u_l, double* u_r) 
-// {   
-//     /* 
-//     Там в формуле на слайде 56 под максимумом стоит какое-то а...
-//     Я так и не пон, что это значит. Типо, скорости D_l и D_r - трехмерные???
-//     */
-//     double* D = new double[2];   
-//     D[0] = min(fabs(matrix_eigenvalue(u_l)), fabs(matrix_eigenvalue(u_r))); 
-//     D[1] = max(fabs(matrix_eigenvalue(u_l)), fabs(matrix_eigenvalue(u_r))); 
+    free_vector(D);
     
-//     return D;
-// }
+    return D;
+}
 
-void godunov (double** u, double** F, int64_t number_of_nods, double time, double Courant, double dx, double adiabat)
+void HLL_method (double** u, double** u_init, double** F, double time, double Courant, double dx, double adiabat, int array_length)
 {
-    double ** temp_u = create_array(3, number_of_nods + 2);
-    double ** F_l = create_array(3, number_of_nods + 2);
-    double ** F_r = create_array(3, number_of_nods + 2);
+    double ** u_L = create_array(array_length, 3);
+    double ** u_R = create_array(array_length, 3);
+    double ** F_L = create_array(array_length, 3);
+    double ** F_R = create_array(array_length, 3);
 
-    double * RHO = create_vector(number_of_nods + 2);
-    double * V = create_vector(number_of_nods + 2);
-    double * P = create_vector(number_of_nods + 2);
+    double * RHO = create_vector(array_length);
+    double * V = create_vector(array_length);
+    double * P = create_vector(array_length);
 
-    int counter = 0;
-    // double D_l, D_r;
-
+    // int counter = 0;
     double t, dt = 0.0;
-    double v_max = 0;
 
     while (t <= time)
     {
-        v_max = vmax(u, adiabat);
-        dt = Courant * dx / v_max;
+        double D_L = speed_estimates(adiabat, u_init)[0];
+        double D_R = speed_estimates(adiabat, u_init)[1];
+
+        dt = Courant * dx / max(abs(D_L), abs(D_R));
         t += dt;
 
-        for (size_t j = 1; j <= number_of_nods; ++j)
-        {
-            for (size_t k = 0; k < 3; ++k)
-            {
-                F_r[j][k] = (F[j][k] + F[j + 1][k]) / 2.0 - v_max / 2.0 * (u[j + 1][k] - u[j][k]);
-                F_l[j][k] = (F[j - 1][k] + F[j][k]) / 2.0 - v_max / 2.0 * (u[j][k] - u[j - 1][k]);
-            }
-        }
-
-        for (size_t j = 1; j <= number_of_nods; ++j)
+        for (size_t j = 1; j < array_length - 1; ++j)
         {
             for (int k = 0; k < 3; ++k)
             {
-                temp_u[j][k] = u[j][k] - dt / dx * (F_r[j][k] - F_l[j][k]);
+                u_L[j][k] = (u[j][k] + u[j - 1][k]) / 2;
+                u_R[j][k] = (u[j + 1][k] + u[j][k]) / 2;
+                F_R[j][k] = ;
+                F_L[j][k] = ;
+
+                if (D_L >= 0)
+                {
+                    F_LR[j][k] = F_L[j][k];
+                }
+                else if (D_L <= 0 && 0 <= D_R)
+                {
+                    F_LR[j][k] = (-D_L * F_R[j][k] + D_R * F_L[j][k] + D_L * D_R * (u_R[j][k] - u_L[j][k])) / (D_R - D_L);
+                }
+                else if (D_R <= 0)
+                {
+                    F_LR[j][k] = F_R[j][k];
+                }
             }
         }
 
-        for (size_t j = 1; j <= number_of_nods; ++j)
+        for (size_t j = 1; j < array_length - 1; ++j)
         {
             for (int k = 0; k < 3; ++k)
             {
-                u[j][k] = temp_u[j][k];
+                u[j][k] = ;
             }
         }
 
         for (int k = 0; k < 3; ++k)
             {
                 u[0][k] = u[1][k];
-                u[number_of_nods + 1][k] = u[number_of_nods][k];
+                u[array_length][k] = u[array_length - 1][k]; // мб тут ошибка...
             }
 
-        u2real(RHO, V, P, u, adiabat);
-        real2u_or_F (RHO, V, P, F, adiabat, false);
+        vectors2feats(RHO, V, P, u, adiabat, array_length);
+        feats2vectors (RHO, V, P, F, adiabat, false, array_length);
 
-        ++counter;
+        // ++counter;
     }
     
-    free_array(temp_u);
-    free_array(F_l);
-    free_array(F_r);
+    free_array(u_L);
+    free_array(u_R);
+    free_array(F_L);
+    free_array(F_R);
 
     free_vector(RHO);
     free_vector(V);
     free_vector(P);
 }
-
-
-// double* matrix_eigenvalue (double* u, double density, double velocity, double pressure)
-// {
-//     double *lambda = new double[3];
-//     lambda[0] = velocity - sound_speed(density, pressure);
-//     lambda[1] = velocity + sound_speed(density, pressure);
-//     lambda[2] = velocity;
-    
-//     return lambda;
-// }
 
 // // Функция для вычисления потоков через грани ячейки
 // void compute_fluxes(double density_L, double velocity_L, double pressure_L,
