@@ -1,45 +1,86 @@
 #include <iostream>
-#include <fstream>
+// #include <fstream>
 #include <string>
+#include <array>
+
 #include "headers/de_allocate.hpp"
+#include "headers/iof.hpp"
 #include "headers/eq_sol_id_gas.hpp"
 
 using namespace std;
 
 /*
-Numerical solution of equations 
-one-dimensional ideal gas dynamics (GD) 
-with adiabatic exponent 𝛾 =5/3 
-using Harten-Lax-van Leer (HLL) method.
+    Numerical solution of equations 
+    one-dimensional ideal gas dynamics (GD) 
+    with adiabatic exponent 𝛾 =5/3 
+    using Harten-Lax-van Leer (HLL) method.
 */
-const double adiabat = 5.0 / 3.0;  // Показатель адиабаты
 
 int main ()
 {
+// Add test selection for single compilation
 
-    // test selection
-    string test;
-    cout << "Choose a test!\nPossible test options: 1, 2, 3, 4 \n";
-    cin >> test;
-    cout << "\n";
+    string test = "";
 
-    double ro_l, v_l, p_l, ro_r, v_r, p_r, t;
-    initial_conditions(test, ro_l, v_l, p_l, ro_r, v_r, p_r, t);
+    while (true)
+    {
+        cout << "Choose a test!\nPossible input options: 1, 2, 3\n";
+        cin >> test;
+        cout << '\n';
 
-    //
-    int N = 0;
-    double C = 0.0;
-    cout << "Enter values for parameters:\n Number of grid cells (N) and Courant number (C).\nPossible options: N=[40, 80, 160, 320]; C=[0.3, 0.6, 0.9]\n";
-    cin >> N >> C;
-    cout << "\n";
+        test = "input" + test + ".txt";
 
-/*  Я остановилась тут. 
-Это, вообще, мой main для задачи Римана. 
-Хз, как для случая A считать число Куранта
-+ хз, надо ли проверять начальные условия для определения конфинурации и на условие вакуума.
+        if (!((test == "input1.txt") || (test == "input2.txt") || (test == "input3.txt")))
+        {
+            cerr << "Invalid input!\n";
+        }
+        else
+        {
+            break;
+        }
+    }
+
+// Parameter initialization:
+//    rho_L (rho_R) = gas density on the left (on the right),
+//    v_L   (v_R)   = gas velocity on the left (on the right),
+//    p_L   (p_R)   = gas pressure on the left (on the right).
+
+    double rho_L, v_L, p_L, rho_R, v_R, p_R;
+    
+    initialization(test, rho_L, v_L, p_L, rho_R, v_R, p_R);
+
+    // moment of time (Саша говорил что-то про то, что это должно быть переменное значение)
+    double time = 0.10;
+
+/*
+    Since there is a gamma() in C++, let’s replace the letter γ with the third letter of the
+    Phoenician alphabet 𐤂 (gimel) that generates it.
 */
+    constexpr double gimel = 5.0 / 3.0; // Ratio of specific heats (adiabatic exponent)
 
+// Continued definition of parameters
 
+    // (rho, v, p) left and right
+    array<array<double, 3>, 2> u0; // массив u0 размером 3x2
+
+    // selecting the number of grid cells (N) and the Courant number (C)
+    int N = 40;      // 40, 80, 160, 320      // Хз, как для случая A считать число Куранта (!!!)
+    double C = 0.3;  // 0.3, 0.6, 0.9
+
+    // coordinate borders
+    const double x_L = -0.5;
+    const double x_R = 0.5;
+    // delta x (это видимо шаг)
+    double dx = (x_R - x_L) / N;
+// daniel:
+    int N0 = N / 2 + 1; // что за zero index, я пока не пон
+    // Number of nods
+    int64_t number_of_nods = N + 1; // пока тоже не ясно, это используется в определении массива
+
+/*  
+    хз, надо ли проверять начальные условия для определения конфинурации и на условие вакуума.
+   -ну вообще я не видела разделения на конфигурации... пока не могу ничего сказать
+*/
     // // The pressure positivity condition is tested for
     // if ((2.0 / (adiabat - 1.0)) * (c_l + c_r) <= (v_r - v_l))
     // {
@@ -50,59 +91,39 @@ int main ()
     // }
 
 
-    // Allocate solution array
-    double * x = new double[N];
-    double xl = -0.5;
-    double xr = 0.5;
+// Allocation of memory to dynamic variables
 
-    double * P = new double[N];
-    double * RO = new double[N];
-    double * V = new double[N];
+    double * x = create_vector(number_of_nods + 2); // т.е. по факту это вектор длиной N+3
+    double * P = create_vector(number_of_nods + 2);
+    double * RO = create_vector(number_of_nods + 2);
+    double * V = create_vector(number_of_nods + 2);
 
-    // Solving a nonlinear equation for pressure by Newton's method
-    double p_star; 
-    int state_newton = 0;
+    double ** u = create_array(3, number_of_nods + 2);
+    double ** F = create_array(3, number_of_nods + 2);
 
-    p_star = Newton_method(ro_l, v_l, p_l, c_l, ro_r, v_r, p_r, c_r, gamma, config_state, state_newton);
-    if (state_newton != 0)
-    {
-        cout << "Error occurred when calculating P* using Newton's method."<< endl;
-        return 4;
-    }
+    for (size_t i = 0; i < number_of_nods + 2; ++i)
+        x[i] = x_L + (i - 1) * dx;
 
-    double v_star_l, ro_star_l, v_star_r, ro_star_r;
-    int state_solution = 0;
-    solution_calculation(ro_l, v_l, p_l, c_l, ro_r, v_r, p_r, c_r, \
-                         p_star, gamma, t, config_state,V, RO, P,\
-                         x, N, xl, xr, state_solution);
+    string suffix = "";
 
-    if (state_solution != 0)
-    {
-        cout << "Error occurred when calculating solution."<< endl;
-        return 5;
-    }
+    // set_initial_values(ro, v, p);
+    suffix = "Start";
+    // make_dat(x, ro, v, p, suffix);
+    // real_to_u(u, ro, v, p);
+    // real_to_F(F, ro, v, p);
+    // godunov(u, F);
+    // u_to_real(u, ro, v, p);
+    suffix = "Stop";
+    // make_dat(x, ro, v, p, suffix);
 
-    string res_path = "./results/res_test_" + test + ".txt";
-    ofstream output(res_path);
-    if (output.is_open())
-    {
-        for (size_t j = 0; j != N; ++j)
-        {
-            output << x[j] << " " << P[j] << " " << RO[j] << " " << V[j] << endl;
-        }
-    
-        output.close();
-        cout << "Result file has been written" << endl;
-    }else
-    {
-        cout << "Enable to open result file."<< endl;
-        return 6;
-    }  
+    free_vector(x);
+    free_vector(P);
+    free_vector(RO);
+    free_vector(V);
 
-    delete x;
-    delete P;
-    delete RO;
-    delete V;
+    free_array(u);
+    free_array(F);
+
     return 0;
 
 }
