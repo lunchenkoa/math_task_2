@@ -32,3 +32,39 @@ bool initialization (string test, double& dens_L, double& vel_L, double& pres_L,
 
     return true;
 }
+
+bool save_results (string test, double* x, double* pressure, double* density, double* velocity)
+{
+    string result = "";
+    if (test == "input1.txt")
+    {
+        result = "output1.txt";
+    }
+    else if (test == "input2.txt")
+    {
+        result = "output2.txt";
+    }
+    else if (test == "input3.txt")
+    {
+        result = "output3.txt";
+    }
+
+    string res_path = "./solution/" + result;
+
+    ofstream output(res_path);
+    if (output.is_open())
+    {
+        int array_length = sizeof(x) / sizeof(x[0]);
+        for (size_t i = 0; i != array_length; ++i)
+            output << x[i] << " " << density[i] << " " << velocity[i] << " " << pressure[i] << '\n';
+    }
+    else
+    {
+        cerr << "Failed to open " << res_path << '\n';
+        return false;
+    }
+    output << '\n';
+    output.close();
+
+    return true;
+}
