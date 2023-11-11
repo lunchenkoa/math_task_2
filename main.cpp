@@ -1,5 +1,4 @@
 #include <iostream>
-// #include <fstream>
 #include <string>
 #include <array>
 
@@ -10,10 +9,8 @@
 using namespace std;
 
 /*
-    Numerical solution of equations 
-    one-dimensional ideal gas dynamics (GD) 
-    with adiabatic exponent 𝛾 =5/3 
-    using Harten-Lax-van Leer (HLL) method.
+    Numerical solution of equations one-dimensional ideal gas dynamics with adiabatic exponent
+    𝛾 = 5/3 using Harten-Lax-van Leer (HLL) method.
 */
 
 int main ()
@@ -48,6 +45,11 @@ int main ()
     double rho_L, v_L, p_L, rho_R, v_R, p_R;
     
     initialization(test, rho_L, v_L, p_L, rho_R, v_R, p_R);
+    /*  ???????????????
+        Каким-то образом надо сделать теперь эти начальные условия внешними переменными, чтобы каждый раз их не передавать туда сюда.
+        Мб они должны быть типа global.... Хз, есть ли такое - надо гуглить.
+        Наверное, стоит их объединить в вектор u?...
+    */
 
     // moment of time (Саша говорил что-то про то, что это должно быть переменное значение)
     double time = 0.10;
@@ -61,7 +63,8 @@ int main ()
 // Continued definition of parameters
 
     // (rho, v, p) left and right
-    array<array<double, 3>, 2> u0; // массив u0 размером 3x2
+    // array<array<double, 3>, 2> u0; // массив u0 размером 3x2 (он есть в функции set_IV)
+    double ** u0 = create_array(3, 2);
 
     // selecting the number of grid cells (N) and the Courant number (C)
     int N = 40;      // 40, 80, 160, 320      // Хз, как для случая A считать число Куранта (!!!)
@@ -73,7 +76,7 @@ int main ()
     // delta x (это видимо шаг)
     double dx = (x_R - x_L) / N;
 // daniel:
-    int N0 = N / 2 + 1; // что за zero index, я пока не пон
+    int N_0 = N / 2 + 1; // что за zero index, я пока не пон (он есть в функции set_IV)
     // Number of nods
     int64_t number_of_nods = N + 1; // пока тоже не ясно, это используется в определении массива
 
@@ -94,9 +97,9 @@ int main ()
 // Allocation of memory to dynamic variables
 
     double * x = create_vector(number_of_nods + 2); // т.е. по факту это вектор длиной N+3
-    double * P = create_vector(number_of_nods + 2);
-    double * RO = create_vector(number_of_nods + 2);
+    double * RHO = create_vector(number_of_nods + 2);
     double * V = create_vector(number_of_nods + 2);
+    double * P = create_vector(number_of_nods + 2);
 
     double ** u = create_array(3, number_of_nods + 2);
     double ** F = create_array(3, number_of_nods + 2);
@@ -104,26 +107,21 @@ int main ()
     for (size_t i = 0; i < number_of_nods + 2; ++i)
         x[i] = x_L + (i - 1) * dx;
 
-    string suffix = "";
-
-    // set_initial_values(ro, v, p);
-    suffix = "Start";
-    // make_dat(x, ro, v, p, suffix);
-    // real_to_u(u, ro, v, p);
-    // real_to_F(F, ro, v, p);
-    // godunov(u, F);
-    // u_to_real(u, ro, v, p);
-    suffix = "Stop";
-    // make_dat(x, ro, v, p, suffix);
+    set_initial_values (RHO, V, P, N_0, u0);
+    real2u_or_F (RHO, V, P, u, gimel, true);
+    real2u_or_F (RHO, V, P, F, gimel, false);
+    godunov (u, F, number_of_nods, time, C, dx, gimel);
+    u2real (RHO, V, P, u, gimel);
+    save_results (test, x, P, RHO, V);
 
     free_vector(x);
-    free_vector(P);
-    free_vector(RO);
+    free_vector(RHO);
     free_vector(V);
+    free_vector(P);
 
     free_array(u);
     free_array(F);
+    free_array(u0);
 
     return 0;
-
 }
