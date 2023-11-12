@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include "de_allocate.hpp"
+#include "iof.hpp"
 
 using namespace std;
 
@@ -87,58 +88,56 @@ double* speed_estimates(double adiabat, double** u_init)
 
 void HLL_method (double** u, double** u_init, double** F, double time, double Courant, double dx, double adiabat, int array_length)
 {
-    double ** u_L = create_array(array_length, 3);
-    double ** u_R = create_array(array_length, 3);
-    double ** F_L = create_array(array_length, 3);
-    double ** F_R = create_array(array_length, 3);
+    double u_L, u_R, F_L, F_R, F_C, F_star;
+    
+    double ** step_u = create_array(array_length + 1, 3);
+    double * RHO = create_vector(array_length + 1);
+    double * V = create_vector(array_length + 1);
+    double * P = create_vector(array_length + 1);
 
-    double ** F = create_array(array_length, 3);
+    double D_L = speed_estimates(adiabat, u_init)[0];
+    double D_R = speed_estimates(adiabat, u_init)[1];
 
-
-    double * RHO = create_vector(array_length);
-    double * V = create_vector(array_length);
-    double * P = create_vector(array_length);
-
-    // int counter = 0;
     double t, dt = 0.0;
 
     while (t <= time)
     {
-        double D_L = speed_estimates(adiabat, u_init)[0];
-        double D_R = speed_estimates(adiabat, u_init)[1];
-
         dt = Courant * dx / max(abs(D_L), abs(D_R));
         t += dt;
 
         for (size_t j = 1; j < array_length - 1; ++j)
         {
             for (int k = 0; k < 3; ++k)
-            {
-                u_L[j][k] = (u[j][k] + u[j - 1][k]) / 2;
-                u_R[j][k] = (u[j + 1][k] + u[j][k]) / 2;
-                F_R[j][k] = ;       // по презе F_L = F(u_L), F_R = F(u_R) что бы это не значило
-                F_L[j][k] = ;
+            {   
+                u_L = u[j][k];
+                u_R = u[j + 1][k];
+                F_L = (F[j - 1][k] + F[j][k]) / 2 - D_L / 2 * (u[j][k] - u[j-1][k]);
+                F_R = (F[j + 1][k] + F[j][k]) / 2 - D_R / 2 * (u[j + 1][k] - u[j][k]);
+                F_C = (-D_L * F_R + D_R * F_L + D_L * D_R * (u_R - u_L)) / (D_R - D_L);
+                
 
                 if (D_L >= 0)
                 {
-                    F[j][k] = F_L[j][k];
+                    F_star = F_L;
                 }
                 else if (D_L <= 0 && 0 <= D_R)
                 {
-                    F[j][k] = (-D_L * F_R[j][k] + D_R * F_L[j][k] + D_L * D_R * (u_R[j][k] - u_L[j][k])) / (D_R - D_L);
+                    F_star = F_C;
                 }
                 else if (D_R <= 0)
                 {
-                    F[j][k] = F_R[j][k];
+                    F_star = F_R;
                 }
+                u[j][k + 1]
             }
+
         }
 
         for (size_t j = 1; j < array_length - 1; ++j)
         {
             for (int k = 0; k < 3; ++k)
             {
-                u[j][k] = ;
+                u[j][k] = u[j][k] - dt/dx * (F_r(j, :) - F_l(j, :));
             }
         }
 
@@ -164,51 +163,3 @@ void HLL_method (double** u, double** u_init, double** F, double time, double Co
     free_vector(P);
 }
 
-// // Функция для вычисления потоков через грани ячейки
-// void compute_fluxes(double density_L, double velocity_L, double pressure_L,
-//                     double density_R, double velocity_R, double pressure_R,
-//                     double &flux_density, double &flux_momentum, double &flux_energy) 
-// {
-//     double sound_speed_L = sound_speed(density_L, pressure_L);
-//     double sound_speed_R = sound_speed(density_R, pressure_R);
-    
-//     double p_star = 0.5 * (pressure_L + pressure_R - 
-//                     density_L * velocity_L * sound_speed_L - 
-//                     density_R * velocity_R * sound_speed_R) / 
-//                     (0.5 * (sound_speed_L + sound_speed_R));
-    
-//     if (p_star <= 0.0) 
-//     {
-//         p_star = tol;
-//     }
-    
-//     double v_star = 0.5 * (velocity_L + velocity_R + 
-//                     (pressure_L - pressure_R) / 
-//                     (density_L * sound_speed_L + density_R * sound_speed_R));
-    
-//     double rho_star = 0.5 * (density_L + density_R);
-    
-//     if (v_star >= 0.0) 
-//     {
-//         flux_density = density_L * velocity_L;
-//         flux_momentum = density_L * velocity_L * velocity_L + pressure_L;
-//         flux_energy = velocity_L * (density_L * (pressure_L + density_L * velocity_L * velocity_L) / (density_L * pressure_L));
-//     } else 
-//     {
-//         flux_density = density_R * velocity_R;
-//         flux_momentum = density_R * velocity_R * velocity_R + pressure_R;
-//         flux_energy = velocity_R * (density_R * (pressure_R + density_R * velocity_R * velocity_R) / (density_R * pressure_R));
-//     }
-    
-//     if (v_star > 0.0) 
-//     {
-//         flux_density += p_star - pressure_L;
-//         flux_momentum += (p_star + density_L * v_star * v_star) * v_star - density_L * velocity_L * (v_star - velocity_L);
-//         flux_energy += v_star * (p_star + density_L * v_star * v_star);
-//     } else 
-//     {
-//         flux_density += p_star - pressure_R;
-//         flux_momentum += (p_star + density_R * v_star * v_star) * v_star - density_R * velocity_R * (v_star - velocity_R);
-//         flux_energy += v_star * (p_star + density_R * v_star * v_star);
-//     }
-// }
