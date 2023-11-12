@@ -28,6 +28,8 @@ bool initialization (string test, double& dens_L, double& vel_L, double& pres_L,
         cerr << "Error reading data from file " << test << '\n';
         return false;
     }
+
+    input >> dens_L >> vel_L >> pres_L >> dens_R >> vel_R >> pres_R;
     input.close();
 
     return true;
@@ -36,18 +38,19 @@ bool initialization (string test, double& dens_L, double& vel_L, double& pres_L,
 bool save_results (string test, double* x, double* pressure, double* density, double* velocity)
 {
     string result = "";
-    if (test == "input1.txt")
-    {
-        result = "output1.txt";
-    }
-    else if (test == "input2.txt")
-    {
-        result = "output2.txt";
-    }
-    else if (test == "input3.txt")
-    {
-        result = "output3.txt";
-    }
+    // if (test == "input1.txt")
+    // {
+    //     result = "output1.txt";
+    // }
+    // else if (test == "input2.txt")
+    // {
+    //     result = "output2.txt";
+    // }
+    // else if (test == "input3.txt")
+    // {
+    //     result = "output3.txt";
+    // }
+    result = "output" + test.substr(test.size() - 5);
 
     string res_path = "./solution/" + result;
 

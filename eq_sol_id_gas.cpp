@@ -7,7 +7,6 @@
 
 using namespace std;
 
-// const double tol = 1e-6;
 
 void set_initial_values (double* DENS, double* VEL, double* PRES, int LR_sep, double** arr, int array_length) // expecting vectors RHO, V, P and N_0, u0
 {
@@ -51,7 +50,6 @@ void feats2vectors (double* DENS, double* VEL, double* PRES, double** arr, doubl
             // similarly, the 3d component of the vector F:
             //     ρv(ε + v^2 / 2 + p / ρ) = pv / (γ-1) + ρv^3 / 2 + pv.
             arr[i][2] = PRES[i] * VEL[i] / (adiabat - 1) + DENS[i] * pow(VEL[i], 3) / 2 + PRES[i] * VEL[i];
-            // arr[i][2] = VEL[i] * (PRES[i] / (adiabat - 1) + PRES[i] + DENS[i] * pow(VEL[i], 2) / 2); // daniel... хз почему у него такая формула
         }
     }
 }
@@ -82,7 +80,7 @@ double* speed_estimates(double adiabat, double** u_init)
     D[0] = min(u_init[0][1], u_init[1][1]) - max(sound_vel_L, sound_vel_R); 
     D[1] = max(u_init[0][1], u_init[1][1]) + max(sound_vel_L, sound_vel_R); 
 
-    free_vector(D);
+    // free_vector(D);       Разве после этого в return не будет просто ничего, тк ты его удалила а потом передала на выход...?
     
     return D;
 }
@@ -93,6 +91,9 @@ void HLL_method (double** u, double** u_init, double** F, double time, double Co
     double ** u_R = create_array(array_length, 3);
     double ** F_L = create_array(array_length, 3);
     double ** F_R = create_array(array_length, 3);
+
+    double ** F = create_array(array_length, 3);
+
 
     double * RHO = create_vector(array_length);
     double * V = create_vector(array_length);
@@ -115,20 +116,20 @@ void HLL_method (double** u, double** u_init, double** F, double time, double Co
             {
                 u_L[j][k] = (u[j][k] + u[j - 1][k]) / 2;
                 u_R[j][k] = (u[j + 1][k] + u[j][k]) / 2;
-                F_R[j][k] = ;
+                F_R[j][k] = ;       // по презе F_L = F(u_L), F_R = F(u_R) что бы это не значило
                 F_L[j][k] = ;
 
                 if (D_L >= 0)
                 {
-                    F_LR[j][k] = F_L[j][k];
+                    F[j][k] = F_L[j][k];
                 }
                 else if (D_L <= 0 && 0 <= D_R)
                 {
-                    F_LR[j][k] = (-D_L * F_R[j][k] + D_R * F_L[j][k] + D_L * D_R * (u_R[j][k] - u_L[j][k])) / (D_R - D_L);
+                    F[j][k] = (-D_L * F_R[j][k] + D_R * F_L[j][k] + D_L * D_R * (u_R[j][k] - u_L[j][k])) / (D_R - D_L);
                 }
                 else if (D_R <= 0)
                 {
-                    F_LR[j][k] = F_R[j][k];
+                    F[j][k] = F_R[j][k];
                 }
             }
         }
