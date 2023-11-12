@@ -3,8 +3,8 @@
 #include <cmath>
 #include <algorithm>
 
-#include "de_allocate.hpp"
-#include "iof.hpp"
+#include "headers/de_allocate.hpp"
+#include "headers/iof.hpp"
 
 using namespace std;
 
@@ -14,15 +14,15 @@ void set_initial_values (double* DENS, double* VEL, double* PRES, int LR_sep, do
     for (size_t i = 0; i < LR_sep; ++i) // for L-part
     {
         DENS[i] = arr[0][0];
-        VEL[i] = arr[1][0];
-        PRES[i] = arr[2][0];
+        VEL[i]  = arr[0][1];
+        PRES[i] = arr[0][2];
     }
 
     for (size_t i = LR_sep; i < array_length; ++i) // for R-part
     {
-        DENS[i] = arr[0][1];
-        VEL[i] = arr[1][1];
-        PRES[i] = arr[2][1];
+        DENS[i] = arr[0][0];
+        VEL[i]  = arr[0][1];
+        PRES[i] = arr[0][2];
     }
 }
 
@@ -71,92 +71,106 @@ double sound_speed (double density, double pressure, double adiabat)
     return sqrt(adiabat * pressure / density);
 }
 
-double* speed_estimates(double adiabat, double** u_init) 
-{   
-    double sound_vel_L = sound_speed(u_init[0][0], u_init[0][2], adiabat);
-    double sound_vel_R = sound_speed(u_init[1][0], u_init[1][2], adiabat);
 
-    // determine the propagation speed
-    double * D = create_vector(2);   
-    D[0] = min(u_init[0][1], u_init[1][1]) - max(sound_vel_L, sound_vel_R); 
-    D[1] = max(u_init[0][1], u_init[1][1]) + max(sound_vel_L, sound_vel_R); 
+double** speed_estimates(double adiabat, double** u_arr, int array_length)
+{
+    double * rho = create_vector(array_length);
+    double * v = create_vector(array_length);
+    double * p = create_vector(array_length);
+    double ** D = create_array(2, array_length-1);
 
-    // free_vector(D);       Разве после этого в return не будет просто ничего, тк ты его удалила а потом передала на выход...?
-    
+    vectors2feats(rho, v, p, u_arr, adiabat, array_length);
+
+    double sound_vel_L, sound_vel_R = 0;
+    for (size_t i = 0; i < array_length-1; ++i)
+    {
+        sound_vel_L = sound_speed(rho[i], p[i], adiabat);
+        sound_vel_R = sound_speed(rho[i+1], p[i+1], adiabat);
+
+        // determine the propagation speed
+        D[0][i] = min(v[i], v[i + 1]) - max(sound_vel_L, sound_vel_R);
+        D[1][i] = max(v[i], v[i + 1]) + max(sound_vel_L, sound_vel_R);
+    }
+
+    free_vector(rho);
+    free_vector(v);
+    free_vector(p);
+
     return D;
 }
 
 void HLL_method (double** u, double** u_init, double** F, double time, double Courant, double dx, double adiabat, int array_length)
 {
-    double u_L, u_R, F_L, F_R, F_C, F_star;
+    double u_L, u_R, F_L, F_R, F_C;
     
-    double ** step_u = create_array(array_length + 1, 3);
-    double * RHO = create_vector(array_length + 1);
-    double * V = create_vector(array_length + 1);
-    double * P = create_vector(array_length + 1);
-
-    double D_L = speed_estimates(adiabat, u_init)[0];
-    double D_R = speed_estimates(adiabat, u_init)[1];
+    double ** F_star = create_array(array_length - 1, 3);
+    double ** step_u = create_array(array_length - 2, 3);
+    double * RHO = create_vector(array_length);
+    double * V = create_vector(array_length);
+    double * P = create_vector(array_length);
 
     double t, dt = 0.0;
 
     while (t <= time)
     {
-        dt = Courant * dx / max(abs(D_L), abs(D_R));
+        double * D_L = speed_estimates(adiabat, u, array_length)[0];
+        double * D_R = speed_estimates(adiabat, u, array_length)[1];
+        dt = Courant * dx / max(abs(D_L[0]), abs(D_R[array_length - 1]));
         t += dt;
 
-        for (size_t j = 1; j < array_length - 1; ++j)
+        for (size_t j = 0; j < array_length-1; ++j)
         {
             for (int k = 0; k < 3; ++k)
             {   
                 u_L = u[j][k];
                 u_R = u[j + 1][k];
-                F_L = (F[j - 1][k] + F[j][k]) / 2 - D_L / 2 * (u[j][k] - u[j-1][k]);
-                F_R = (F[j + 1][k] + F[j][k]) / 2 - D_R / 2 * (u[j + 1][k] - u[j][k]);
-                F_C = (-D_L * F_R + D_R * F_L + D_L * D_R * (u_R - u_L)) / (D_R - D_L);
+                F_L = F[j][k];
+                F_R = F[j + 1][k];
+                // F_L = (F[j - 1][k] + F[j][k]) / 2 - D_L[j-1] / 2 * (u[j][k] - u[j-1][k]);
+                // F_R = (F[j + 1][k] + F[j][k]) / 2 - D_R[j-1] / 2 * (u[j + 1][k] - u[j][k]);
+                F_C = (-D_L[j] * F_R + D_R[j] * F_L + D_L[j] * D_R[j] * (u_R - u_L)) / (D_R[j] - D_L[j]);
                 
 
-                if (D_L >= 0)
+                if (D_L[j] >= 0)
                 {
-                    F_star = F_L;
+                    F_star[j][k] = F_L;
                 }
-                else if (D_L <= 0 && 0 <= D_R)
+                else if (D_L[j] <= 0 && 0 <= D_R[j])
                 {
-                    F_star = F_C;
+                    F_star[j][k] = F_C;
                 }
-                else if (D_R <= 0)
+                else if (D_R[j] <= 0)
                 {
-                    F_star = F_R;
+                    F_star[j][k] = F_R;
                 }
-                u[j][k + 1]
             }
-
         }
 
-        for (size_t j = 1; j < array_length - 1; ++j)
+        for (size_t j = 0; j < array_length - 2; ++j)
         {
             for (int k = 0; k < 3; ++k)
             {
-                u[j][k] = u[j][k] - dt/dx * (F_r(j, :) - F_l(j, :));
+                step_u[j][k] = u[j+1][k] - dt/dx * (F_star[j][k] - F_star[j+1][k]);
             }
         }
 
         for (int k = 0; k < 3; ++k)
             {
-                u[0][k] = u[1][k];
-                u[array_length][k] = u[array_length - 1][k]; // мб тут ошибка...
+                u[0][k] = step_u[0][k];
+                for (size_t g = 1; g <= array_length - 1; ++g)
+                {
+                    u[g][k] = step_u[g-1][k];
+                }
+                // u[array_length][k] = step_u[array_length - 2][k];
             }
 
         vectors2feats(RHO, V, P, u, adiabat, array_length);
         feats2vectors (RHO, V, P, F, adiabat, false, array_length);
 
-        // ++counter;
     }
     
-    free_array(u_L);
-    free_array(u_R);
-    free_array(F_L);
-    free_array(F_R);
+    free_array(step_u);
+    free_array(F_star);
 
     free_vector(RHO);
     free_vector(V);

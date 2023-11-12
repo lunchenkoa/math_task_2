@@ -5,6 +5,6 @@
 
 bool initialization (std::string test, double& dens_L, double& vel_L, double& pres_L, \
                                        double& dens_R, double& vel_R, double& pres_R);
-bool save_results (string test, double* x, double* pressure, double* density, double* velocity);
+bool save_results (std::string test, double* x, double* pressure, double* density, double* velocity);
 
 #endif

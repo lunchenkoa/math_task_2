@@ -64,8 +64,13 @@ int main ()
 // Continued definition of parameters
 
     // selecting the number of grid cells (N) and the Courant number (C)
-    int N = 40;      // 40, 80, 160, 320      // Хз, как для случая A считать число Куранта (!!!)
-    double C = 0.3;  // 0.3, 0.6, 0.9
+    int N = 0;
+    double C = 0.0;
+    cout << "Enter values for parameters:\n Number of grid cells (N) and Courant number (C).\nPossible options: N=[40, 80, 160, 320]; C=[0.3, 0.6, 0.9]\n";
+    cin >> N >> C;
+    cout << "\n";
+    // int N = 40;      // 40, 80, 160, 320
+    // double C = 0.3;  // 0.3, 0.6, 0.9
 
     // coordinate borders
     const double x_L = -0.5;
@@ -94,8 +99,8 @@ int main ()
     double ** u = create_array(nodes, 3);
     double ** F = create_array(nodes, 3);
 
-    for (size_t i = 1; i < nodes; ++i)
-        x[i] = x_L + (i - 1) * dx;
+    for (size_t i = 0; i < nodes; ++i)
+        x[i] = x_L + i * dx;
 
     set_initial_values (RHO, V, P, LR_sep, u_0, nodes);
     feats2vectors (RHO, V, P, u, gimel, true, nodes);

@@ -10,6 +10,7 @@ double ** create_array (size_t rows, size_t cols)
     return m;
 }
 
+
 double * create_vector (size_t a)
 {
     double * v = new double[a];
