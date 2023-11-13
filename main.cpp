@@ -1,9 +1,9 @@
 #include <iostream>
 #include <string>
 
-#include "../headers/de_allocate.hpp"
-#include "../headers/iof.hpp"
-#include "../headers/eq_sol_id_gas.hpp"
+#include "headers/de_allocate.hpp"
+#include "headers/iof.hpp"
+#include "headers/eq_sol_id_gas.hpp"
 
 using namespace std;
 
@@ -25,9 +25,10 @@ int main ()
         cin >> test_nmbr;
         cout << '\n';
 
-        string test_file = "../input/input" + test_nmbr + ".txt";
+        test_file = "input" + test_nmbr + ".txt";
+        // cout << test_file << "\n";
 
-        if (!((test_file == "../input/input1.txt") || (test_file == "../input/input2.txt") || (test_file == "../input/input3.txt")))
+        if (!((test_file == "input1.txt") || (test_file == "input2.txt") || (test_file == "input3.txt")))
         {
             cerr << "Invalid input!\n";
         }
@@ -36,6 +37,7 @@ int main ()
             break;
         }
     }
+    
 
 // Parameter initialization:
 //    rho_L (rho_R) = gas density on the left (on the right),
@@ -103,12 +105,19 @@ int main ()
     for (size_t i = 0; i < nodes; ++i)
         x[i] = x_L + i * dx;
 
+    // cout << "Alive here \n";
     set_initial_values (RHO, V, P, LR_sep, u_0, nodes);
+    cout << "Alive here 2\n";
     feats2vectors (RHO, V, P, u, gimel, true, nodes);
+    cout << "Alive here 3\n";
     feats2vectors (RHO, V, P, F, gimel, false, nodes);
+    cout << "Alive here 4\n";
     HLL_method (u, u_0, F, time, C, dx, gimel, nodes);
+    cout << "Alive here 5\n";
     vectors2feats (RHO, V, P, u, gimel, nodes);
+    cout << "Alive here 6\n";
     save_results (test_nmbr, x, P, RHO, V);
+    cout << "Alive here 7\n";
 
     free_vector(x);
     free_vector(RHO);

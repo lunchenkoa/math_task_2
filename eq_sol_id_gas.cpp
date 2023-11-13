@@ -3,8 +3,8 @@
 #include <cmath>
 #include <algorithm>
 
-#include "../headers/de_allocate.hpp"
-#include "../headers/iof.hpp"
+#include "headers/de_allocate.hpp"
+#include "headers/iof.hpp"
 
 using namespace std;
 
@@ -73,7 +73,7 @@ double sound_speed (double density, double pressure, double adiabat)
 }
 
 
-double** speed_estimates(double adiabat, double** u_arr, int array_length, double** D)
+void speed_estimates(double adiabat, double** u_arr, int array_length, double** D)
 {
     double * rho = create_vector(array_length);   //  new double [array_length];  // 
     double * v = create_vector(array_length);     //  new double [array_length];  //  
@@ -100,7 +100,7 @@ double** speed_estimates(double adiabat, double** u_arr, int array_length, doubl
     free_vector(v);
     free_vector(p);
 
-    return D;
+    // return D;
 }
 
 void HLL_method (double** u, double** u_init, double** F, double time, double Courant, double dx, double adiabat, int array_length)
@@ -118,16 +118,25 @@ void HLL_method (double** u, double** u_init, double** F, double time, double Co
 
     while (t <= time)
     {
-        D = speed_estimates(adiabat, u, array_length, D);
+        speed_estimates(adiabat, u, array_length, D);
+
         double * D_L = D[0];
         double * D_R = D[1];
-        dt = Courant * dx / max(abs(D_L[0]), abs(D_R[array_length - 1]));
+        for (size_t i=0; i <array_length-1; ++i)
+        {
+            cout << D_L[i] << "\n";
+            cout << D_R[i] << "\n";
+        }
+        // cout << "Alive here 4.0\n";
+        dt = Courant * dx / max(abs(D_L[0]), abs(D_R[array_length - 2]));
         t += dt;
+        // cout<< t << " " << dt << " " << time << "\n";
 
         for (size_t j = 0; j < array_length-1; ++j)
         {
             for (size_t k = 0; k < 3; ++k)
             {   
+                // cout << "hhi\n";
                 u_L = u[j][k];
                 u_R = u[j + 1][k];
                 F_L = F[j][k];
@@ -137,7 +146,7 @@ void HLL_method (double** u, double** u_init, double** F, double time, double Co
                 F_C = (-D_L[j] * F_R + D_R[j] * F_L + D_L[j] * D_R[j] * (u_R - u_L)) / (D_R[j] - D_L[j]);
                 
 
-                if (D_L[j] >= 0)
+                if (D_L[j] > 0)
                 {
                     F_star[j][k] = F_L;
                 }
@@ -145,7 +154,7 @@ void HLL_method (double** u, double** u_init, double** F, double time, double Co
                 {
                     F_star[j][k] = F_C;
                 }
-                else if (D_R[j] <= 0)
+                else if (D_R[j] < 0)
                 {
                     F_star[j][k] = F_R;
                 }
@@ -154,32 +163,41 @@ void HLL_method (double** u, double** u_init, double** F, double time, double Co
 
         for (size_t j = 0; j < array_length - 2; ++j)
         {
+            // cout << "hello\n";
             for (size_t k = 0; k < 3; ++k)
             {
+                // cout << "hello 2\n";
                 step_u[j][k] = u[j+1][k] - dt/dx * (F_star[j][k] - F_star[j+1][k]);
+                // cout <<  F_star[j][k] << " " << F_star[j+1][k] << " \n";
+                // cout << u[j+1][k] << "\n";
+                // cout << step_u[j][k]<<"\n";
             }
         }
 
         for (size_t k = 0; k < 3; ++k)
             {
+                // cout << "hello 3\n";
                 u[0][k] = step_u[0][k];
+                // cout << u[0][k] << "\n";
                 for (size_t g = 1; g <= array_length - 1; ++g)
                 {
+                    // cout << "hello 4\n";
                     u[g][k] = step_u[g-1][k];
                 }
                 // u[array_length][k] = step_u[array_length - 2][k];
             }
-
+        cout << "Alive here 4.1\n";
         vectors2feats(RHO, V, P, u, adiabat, array_length);
         feats2vectors (RHO, V, P, F, adiabat, false, array_length);
-        delete [] D_L;
-        delete [] D_R;
+        cout << "Alive here 4.2\n";
+        // delete [] D_L;
+        // delete [] D_R;
         // free_vector(D_L);
         // free_vector(D_R);
         // free_array(D);
 
     }
-    
+    cout << "Alive here 4.3\n";
     free_array(step_u);
     free_array(D);
     free_array(F_star);
