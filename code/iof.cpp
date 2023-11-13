@@ -38,21 +38,9 @@ bool initialization (string test, double& dens_L, double& vel_L, double& pres_L,
 bool save_results (string test, double* x, double* pressure, double* density, double* velocity)
 {
     string result = "";
-    // if (test == "input1.txt")
-    // {
-    //     result = "output1.txt";
-    // }
-    // else if (test == "input2.txt")
-    // {
-    //     result = "output2.txt";
-    // }
-    // else if (test == "input3.txt")
-    // {
-    //     result = "output3.txt";
-    // }
-    result = "output" + test.substr(test.size() - 5);
+    result = "output" + test + ".txt";
 
-    string res_path = "./solution/" + result;
+    string res_path = "../solution/" + result;
 
     ofstream output(res_path);
     if (output.is_open())

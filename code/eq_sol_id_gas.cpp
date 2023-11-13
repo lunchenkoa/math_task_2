@@ -3,8 +3,8 @@
 #include <cmath>
 #include <algorithm>
 
-#include "headers/de_allocate.hpp"
-#include "headers/iof.hpp"
+#include "../headers/de_allocate.hpp"
+#include "../headers/iof.hpp"
 
 using namespace std;
 
@@ -32,7 +32,7 @@ void feats2vectors (double* DENS, double* VEL, double* PRES, double** arr, doubl
 {
     if (is_arr_u)
     {
-        for (int i = 0; i < array_length; ++i)
+        for (size_t i = 0; i < array_length; ++i)
         {
             arr[i][0] = DENS[i];
             arr[i][1] = DENS[i] * VEL[i];
@@ -45,7 +45,7 @@ void feats2vectors (double* DENS, double* VEL, double* PRES, double** arr, doubl
     }
     else
     {
-        for (int i = 0; i < array_length; ++i)
+        for (size_t i = 0; i < array_length; ++i)
         {
             arr[i][0] = DENS[i] * VEL[i];
             arr[i][1] = DENS[i] * pow(VEL[i], 2) + PRES[i];
@@ -73,12 +73,12 @@ double sound_speed (double density, double pressure, double adiabat)
 }
 
 
-double** speed_estimates(double adiabat, double** u_arr, int array_length)
+double** speed_estimates(double adiabat, double** u_arr, int array_length, double** D)
 {
-    double * rho =  new double [array_length];  // create_vector(array_length);
-    double * v =  new double [array_length];  //  create_vector(array_length);
-    double * p =  new double [array_length];  //  create_vector(array_length);
-    double ** D = create_array(2, array_length-1);
+    double * rho = create_vector(array_length);   //  new double [array_length];  // 
+    double * v = create_vector(array_length);     //  new double [array_length];  //  
+    double * p = create_vector(array_length);     //  new double [array_length];  //  
+    // double ** D = create_array(2, array_length-1);
 
     vectors2feats(rho, v, p, u_arr, adiabat, array_length);
 
@@ -93,12 +93,12 @@ double** speed_estimates(double adiabat, double** u_arr, int array_length)
         D[1][i] = max(v[i], v[i + 1]) + max(sound_vel_L, sound_vel_R);
     }
 
-    delete [] p;
-    delete [] rho;
-    delete [] v;
-    // free_vector(rho);
-    // free_vector(v);
-    // free_vector(p);
+    // delete [] p;
+    // delete [] rho;
+    // delete [] v;
+    free_vector(rho);
+    free_vector(v);
+    free_vector(p);
 
     return D;
 }
@@ -109,22 +109,24 @@ void HLL_method (double** u, double** u_init, double** F, double time, double Co
     
     double ** F_star = create_array(array_length - 1, 3);
     double ** step_u = create_array(array_length - 2, 3);
-    double * RHO =  new double [array_length];  //   create_vector(array_length);
-    double * V =  new double [array_length];  //   create_vector(array_length);
-    double * P =  new double [array_length];  //   create_vector(array_length);
+    double * RHO = create_vector(array_length);   // new double [array_length];  //   
+    double * V = create_vector(array_length);   //   new double [array_length];  //   
+    double * P = create_vector(array_length);   //   new double [array_length];  //   
+    double ** D = create_array(2, array_length-1);
 
     double t, dt = 0.0;
 
     while (t <= time)
     {
-        double * D_L = speed_estimates(adiabat, u, array_length)[0];
-        double * D_R = speed_estimates(adiabat, u, array_length)[1];
+        D = speed_estimates(adiabat, u, array_length, D);
+        double * D_L = D[0];
+        double * D_R = D[1];
         dt = Courant * dx / max(abs(D_L[0]), abs(D_R[array_length - 1]));
         t += dt;
 
         for (size_t j = 0; j < array_length-1; ++j)
         {
-            for (int k = 0; k < 3; ++k)
+            for (size_t k = 0; k < 3; ++k)
             {   
                 u_L = u[j][k];
                 u_R = u[j + 1][k];
@@ -152,13 +154,13 @@ void HLL_method (double** u, double** u_init, double** F, double time, double Co
 
         for (size_t j = 0; j < array_length - 2; ++j)
         {
-            for (int k = 0; k < 3; ++k)
+            for (size_t k = 0; k < 3; ++k)
             {
                 step_u[j][k] = u[j+1][k] - dt/dx * (F_star[j][k] - F_star[j+1][k]);
             }
         }
 
-        for (int k = 0; k < 3; ++k)
+        for (size_t k = 0; k < 3; ++k)
             {
                 u[0][k] = step_u[0][k];
                 for (size_t g = 1; g <= array_length - 1; ++g)
@@ -172,17 +174,21 @@ void HLL_method (double** u, double** u_init, double** F, double time, double Co
         feats2vectors (RHO, V, P, F, adiabat, false, array_length);
         delete [] D_L;
         delete [] D_R;
+        // free_vector(D_L);
+        // free_vector(D_R);
+        // free_array(D);
 
     }
     
     free_array(step_u);
+    free_array(D);
     free_array(F_star);
 
-    delete [] P;
-    delete [] RHO;
-    delete [] V;
-    // free_vector(RHO);
-    // free_vector(V);
-    // free_vector(P);
+    // delete [] P;
+    // delete [] RHO;
+    // delete [] V;
+    free_vector(RHO);
+    free_vector(V);
+    free_vector(P);
 }
 

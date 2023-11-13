@@ -1,9 +1,9 @@
 #include <iostream>
 #include <string>
 
-#include "headers/de_allocate.hpp"
-#include "headers/iof.hpp"
-#include "headers/eq_sol_id_gas.hpp"
+#include "../headers/de_allocate.hpp"
+#include "../headers/iof.hpp"
+#include "../headers/eq_sol_id_gas.hpp"
 
 using namespace std;
 
@@ -16,17 +16,18 @@ int main ()
 {
 // Add test selection for single compilation
 
-    string test = "";
+    string test_nmbr = "";
+    string test_file = "";
 
     while (true)
     {
         cout << "Choose a test!\nPossible input options: 1, 2, 3\n";
-        cin >> test;
+        cin >> test_nmbr;
         cout << '\n';
 
-        test = "input" + test + ".txt";
+        string test_file = "../input/input" + test_nmbr + ".txt";
 
-        if (!((test == "input1.txt") || (test == "input2.txt") || (test == "input3.txt")))
+        if (!((test_file == "../input/input1.txt") || (test_file == "../input/input2.txt") || (test_file == "../input/input3.txt")))
         {
             cerr << "Invalid input!\n";
         }
@@ -42,7 +43,7 @@ int main ()
 //    p_L   (p_R)   = gas pressure on the left (on the right).
 
     double rho_L, v_L, p_L, rho_R, v_R, p_R;
-    initialization(test, rho_L, v_L, p_L, rho_R, v_R, p_R);
+    initialization(test_file, rho_L, v_L, p_L, rho_R, v_R, p_R);
 
     double ** u_0 = create_array(2, 3); // array with test's {(rho, v, p)_L, (rho, v, p)_R}
     u_0[0][0] = rho_L;
@@ -64,13 +65,13 @@ int main ()
 // Continued definition of parameters
 
     // selecting the number of grid cells (N) and the Courant number (C)
-    int N = 0;
-    double C = 0.0;
-    cout << "Enter values for parameters:\n Number of grid cells (N) and Courant number (C).\nPossible options: N=[40, 80, 160, 320]; C=[0.3, 0.6, 0.9]\n";
-    cin >> N >> C;
-    cout << "\n";
-    // int N = 40;      // 40, 80, 160, 320
-    // double C = 0.3;  // 0.3, 0.6, 0.9
+    // int N = 0;
+    // double C = 0.0;
+    // cout << "Enter values for parameters:\n Number of grid cells (N) and Courant number (C).\nPossible options: N=[40, 80, 160, 320]; C=[0.3, 0.6, 0.9]\n";
+    // cin >> N >> C;
+    // cout << "\n";
+    int N = 40;      // 40, 80, 160, 320
+    double C = 0.3;  // 0.3, 0.6, 0.9
 
     // coordinate borders
     const double x_L = -0.5;
@@ -107,16 +108,16 @@ int main ()
     feats2vectors (RHO, V, P, F, gimel, false, nodes);
     HLL_method (u, u_0, F, time, C, dx, gimel, nodes);
     vectors2feats (RHO, V, P, u, gimel, nodes);
-    save_results (test, x, P, RHO, V);
+    save_results (test_nmbr, x, P, RHO, V);
 
-    // free_vector(x);
-    // free_vector(RHO);
-    // free_vector(V);
-    // free_vector(P);
-    delete [] x;
-    delete [] P;
-    delete [] RHO;
-    delete [] V;
+    free_vector(x);
+    free_vector(RHO);
+    free_vector(V);
+    free_vector(P);
+    // delete [] x;
+    // delete [] P;
+    // delete [] RHO;
+    // delete [] V;
 
     free_array(u_0);
     free_array(u);
