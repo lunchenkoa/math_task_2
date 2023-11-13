@@ -91,10 +91,10 @@ int main ()
 
 // Allocation of memory to dynamic variables
 
-    double * x = create_vector(nodes); 
-    double * RHO = create_vector(nodes);
-    double * V = create_vector(nodes);
-    double * P = create_vector(nodes);
+    double * x = new double [nodes]; // = create_vector(nodes); 
+    double * RHO = new double [nodes]; // create_vector(nodes);
+    double * V = new double [nodes]; // create_vector(nodes);
+    double * P = new double [nodes]; // create_vector(nodes);
 
     double ** u = create_array(nodes, 3);
     double ** F = create_array(nodes, 3);
@@ -109,10 +109,14 @@ int main ()
     vectors2feats (RHO, V, P, u, gimel, nodes);
     save_results (test, x, P, RHO, V);
 
-    free_vector(x);
-    free_vector(RHO);
-    free_vector(V);
-    free_vector(P);
+    // free_vector(x);
+    // free_vector(RHO);
+    // free_vector(V);
+    // free_vector(P);
+    delete [] x;
+    delete [] P;
+    delete [] RHO;
+    delete [] V;
 
     free_array(u_0);
     free_array(u);
