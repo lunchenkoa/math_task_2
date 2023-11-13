@@ -1,2 +1,2 @@
-./debug_trash
-./.vscode
+./debug_trash/**
+./.vscode/**
