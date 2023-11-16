@@ -1,0 +1,44 @@
+cmake_minimum_required (VERSION 3.11)
+project (Main CXX)
+
+
+#set(CMAKE_CXX_STANDARD 14)
+option(MAKE_TESTS "Make UAV tests" ON)
+
+find_package(Threads)
+
+#set(CMAKE_FIND_DEBUG_MODE TRUE)
+#set(CMAKE_FIND_DEBUG_MODE FALSE)
+set(CMAKE_FIND_DEBUG_MODE FALSE)
+
+
+set(CMAKE_FIND_DEBUG_MODE FALSE)
+#find_package(Ceres 2.2.0  EXACT)
+
+
+set(${PROJECT_NAME}_HEADERS_PUBLIC 
+  #  haeders/de_allocate.hpp
+  #  haeders/iof.hpp
+  #  haeders/eq_sol_id_gas.hpp
+)
+
+set(${PROJECT_NAME}_SRC
+    main.cpp
+    de_allocate.cpp
+    iof.cpp
+    eq_sol_id_gas.cpp
+)
+
+add_executable(${PROJECT_NAME}Bin ${${PROJECT_NAME}_HEADERS_PUBLIC} ${${PROJECT_NAME}_SRC})
+#target_link_libraries(${PROJECT_NAME}Bin Threads::Threads ${OpenCV_LIBS}  Eigen3::Eigen
+#fmt::fmt )
+
+
+target_include_directories(${PROJECT_NAME}Bin
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/headers>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+
+
+

@@ -113,6 +113,8 @@ void HLL_method (int N, double adiabat, conservative_variables cons, primitive_v
         {
             for (size_t k = 0; k < 3; ++k)
             {
+                // Перевод в примитирвые переменные из u и посчитать из них для нужных индектов F-L, F_R
+
                 F_L[j] = ; // F(u_L)
                 F_R[j] = ; // F(u_R)
 
@@ -135,10 +137,10 @@ void HLL_method (int N, double adiabat, conservative_variables cons, primitive_v
         {
             for (size_t k = 0; k < 3; ++k)
             {
-                tmp_u[j][k] = cons.u[j][k] - dt / dx * (F_star[j + 1][k] - F_star[j][k]);
+                tmp_u[j][k] = cons.u[j][k] - dt / dx * (F_star[j + 1][k] - F_star[j][k]); // определить temp_u
             }
         }
-
+        // Надо обновить граничные условня для всех индексов, кроме первого и последнего
         for (size_t j = 0; j < 3; ++j)
         {
             cons.u[0][j] = tmp_u[0][j];
@@ -151,6 +153,7 @@ void HLL_method (int N, double adiabat, conservative_variables cons, primitive_v
         dt = Courant * dx / max(abs(D_L[0]), abs(D_R[N]));
         t += dt;
     }
+    // Перевод в примитивные переменные из u
     
     free_array(F_star);
     free_vector(D_L);
