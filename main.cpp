@@ -1,16 +1,13 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 
-#include "headers/de_allocate.hpp"
+#include "headers/variables.hpp"
 #include "headers/iof.hpp"
-#include "headers/eq_sol_id_gas.hpp"
+#include "headers/functions.hpp"
+#include "headers/de_allocate.hpp"
 
 using namespace std;
-
-/*
-    Numerical solution of equations one-dimensional ideal gas dynamics with adiabatic exponent
-    𝛾 = 5/3 using Harten-Lax-van Leer (HLL) method.
-*/
 
 int main ()
 {
@@ -25,10 +22,10 @@ int main ()
         cin >> test_nmbr;
         cout << '\n';
 
-        test_file = "input" + test_nmbr + ".txt";
-        // cout << test_file << "\n";
+        test_file = "input/input" + test_nmbr + ".txt";
 
-        if (!((test_file == "input1.txt") || (test_file == "input2.txt") || (test_file == "input3.txt")))
+        if (!((test_file == "input/input1.txt") || (test_file == "input/input2.txt") || \
+              (test_file == "input/input3.txt")))
         {
             cerr << "Invalid input!\n";
         }
@@ -37,100 +34,40 @@ int main ()
             break;
         }
     }
-    
 
-// Parameter initialization:
-//    rho_L (rho_R) = gas density on the left (on the right),
-//    v_L   (v_R)   = gas velocity on the left (on the right),
-//    p_L   (p_R)   = gas pressure on the left (on the right).
+// Parameter initialization
+//    {rho,v,p}_L = left.{dens,vel,pres}, {rho,v,p}_R = right.{dens,vel,pres}
 
-    double rho_L, v_L, p_L, rho_R, v_R, p_R;
-    initialization(test_file, rho_L, v_L, p_L, rho_R, v_R, p_R);
-
-    double ** u_0 = create_array(2, 3); // array with test's {(rho, v, p)_L, (rho, v, p)_R}
-    u_0[0][0] = rho_L;
-    u_0[0][1] = v_L;
-    u_0[0][2] = p_L;
-    u_0[1][0] = rho_R;
-    u_0[1][1] = v_R;
-    u_0[1][2] = p_R;
-
-    // moment of time
-    double time = 0.10;
-
-/*
-    Since there is a gamma() in C++, let’s replace the letter γ with the third letter of the
-    Phoenician alphabet 𐤂 (gimel) that generates it.
-*/
-    constexpr double gimel = 5.0 / 3.0; // Ratio of specific heats (adiabatic exponent)
-
-// Continued definition of parameters
-
-    // selecting the number of grid cells (N) and the Courant number (C)
-    // int N = 0;
-    // double C = 0.0;
-    // cout << "Enter values for parameters:\n Number of grid cells (N) and Courant number (C).\nPossible options: N=[40, 80, 160, 320]; C=[0.3, 0.6, 0.9]\n";
-    // cin >> N >> C;
-    // cout << "\n";
-    int N = 40;      // 40, 80, 160, 320
-    double C = 0.3;  // 0.3, 0.6, 0.9
-
-    // coordinate borders
-    const double x_L = -0.5;
-    const double x_R = 0.5;
-    // delta x (step)
-    double dx = (x_R - x_L) / N;
-    // origin (here we can separate Left and Right) along the x axis (left-right separator)
-    int LR_sep = N / 2 + 1;
-    // number of grid nodes
-    int nodes = N + 1;
-
-/*  
-  + хз, надо ли проверять начальные условия для определения конфинурации и на условие вакуума.
-
-  - ну вообще я не видела разделения на конфигурации... по описанию HLL это две УВ, разлетающиеся
-    в разные стороны, двум УВ соответствует кофигурация Б
-*/
+    primitive_variables left, right;
+    initialization (test_file, left, right);
 
 // Allocation of memory to dynamic variables
 
-    double * x = new double [nodes]; // = create_vector(nodes); 
-    double * RHO = new double [nodes]; // create_vector(nodes);
-    double * V = new double [nodes]; // create_vector(nodes);
-    double * P = new double [nodes]; // create_vector(nodes);
+    primitive_variables * init_features = new primitive_variables[N]; // array for init {rho, v, p}
+    initialization_of_IC(N, init_features, left, right);              // which is half filled with 
+                                                                      // left characteristics and 
+                                                                      // half with right ones
 
-    double ** u = create_array(nodes, 3);
-    double ** F = create_array(nodes, 3);
-
-    for (size_t i = 0; i < nodes; ++i)
+    double * x = create_vector(N);
+    for (size_t i = 0; i < N; ++i)
         x[i] = x_L + i * dx;
 
-    // cout << "Alive here \n";
-    set_initial_values (RHO, V, P, LR_sep, u_0, nodes);
-    cout << "Alive here 2\n";
-    feats2vectors (RHO, V, P, u, gimel, true, nodes);
-    cout << "Alive here 3\n";
-    feats2vectors (RHO, V, P, F, gimel, false, nodes);
-    cout << "Alive here 4\n";
-    HLL_method (u, u_0, F, time, C, dx, gimel, nodes);
-    cout << "Alive here 5\n";
-    vectors2feats (RHO, V, P, u, gimel, nodes);
-    cout << "Alive here 6\n";
-    save_results (test_nmbr, x, P, RHO, V);
-    cout << "Alive here 7\n";
+    conservative_variables cons_vars;
+    prim2cons (N, cons_vars, init_features, gimel); // здесь работа init_features по идее кончается
 
-    free_vector(x);
-    free_vector(RHO);
-    free_vector(V);
-    free_vector(P);
-    // delete [] x;
-    // delete [] P;
-    // delete [] RHO;
-    // delete [] V;
+// Solution
 
-    free_array(u_0);
-    free_array(u);
-    free_array(F);
+    HLL_method (N, gimel, cons_vars, init_features, C);
+    cons2prim (N, cons_vars, init_features, gimel); // и здесь
+    save_results (test_nmbr, x, init_features); // я не уверена, что здесь init_feat потому что не понимаю как это работает.............
+
+// Deallocation of memory
+
+    delete [] init_features;
+    delete [] x;
+
+    free_array(cons_vars.u);
+    free_array(cons_vars.F);
     
     return 0;
 }

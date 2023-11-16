@@ -1,5 +1,5 @@
 main: 
-	g++ de_allocate.cpp eq_sol_id_gas.cpp iof.cpp main.cpp -o main
+	g++ main.cpp iof.cpp de_allocate.cpp functions.cpp -o main
 clean:
 	rm -fr *.o main
 result: main

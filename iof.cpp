@@ -2,19 +2,13 @@
 #include <fstream>
 #include <string>
 
+#include "headers/variables.hpp"
+
 using namespace std;
 
 // The function of reading data from a file
 
-// Introduce the notation:
-//    dens_L, vel_L, pres_L = gas density, gas velocity, gas pressure on the LEFT,
-//                          there are left border conditions.
-//    dens_R, vel_R, pres_R = gas density, gas velocity, gas pressure on the RIGHT,
-//                          there are right border conditions.
-//    time is a time point under study.
-
-bool initialization (string test, double& dens_L, double& vel_L, double& pres_L, \
-                                  double& dens_R, double& vel_R, double& pres_R)
+bool initialization (string& test, primitive_variables& left, primitive_variables& right)
 {
     ifstream input(test);
     if (!input.is_open())
@@ -23,19 +17,17 @@ bool initialization (string test, double& dens_L, double& vel_L, double& pres_L,
         return false;
     }
 
-    if (!(input >> dens_L >> vel_L >> pres_L >> dens_R >> vel_R >> pres_R))
+    if (!(input >> left.dens >> left.vel >> left.pres >> right.dens >> right.vel >> right.pres))
     {
         cerr << "Error reading data from file " << test << '\n';
         return false;
     }
-
-    input >> dens_L >> vel_L >> pres_L >> dens_R >> vel_R >> pres_R;
     input.close();
 
     return true;
 }
 
-bool save_results (string test, double* x, double* pressure, double* density, double* velocity)
+bool save_results (string test, double* x, primitive_variables* states)
 {
     string result = "";
     result = "output" + test + ".txt";
@@ -47,7 +39,7 @@ bool save_results (string test, double* x, double* pressure, double* density, do
     {
         int array_length = sizeof(x) / sizeof(x[0]);
         for (size_t i = 0; i != array_length; ++i)
-            output << x[i] << " " << density[i] << " " << velocity[i] << " " << pressure[i] << '\n';
+            output << x[i] << " " << states[i].dens << " " << states[i].vel << " " << states[i].pres << '\n';
     }
     else
     {
