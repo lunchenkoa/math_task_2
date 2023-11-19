@@ -1,4 +1,4 @@
-#include "headers/de_allocate.hpp"
+#include "de_allocate.hpp"
 
 #ifndef VAR_FUNC
 #define VAR_FUNC
@@ -11,7 +11,7 @@ struct primitive_variables
 };
 
 // a moment of time
-    double time = 0.10;
+    double time_res = 0.10;
 
 /*
     Since there is a gamma() in C++, let’s replace the letter γ with the third letter of the

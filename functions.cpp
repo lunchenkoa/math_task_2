@@ -5,6 +5,7 @@
 
 #include "headers/iof.hpp"
 #include "headers/variables.hpp"
+#include "headers/de_allocate.hpp"
 
 using namespace std;
 
@@ -95,7 +96,7 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
 
     primitive_variables * prims = new primitive_variables[N];
 
-    while (t <= time)
+    while (t <= time_res)
     {
         cons2prim (N, cons, prims, adiabat);
 
