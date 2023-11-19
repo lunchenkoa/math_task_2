@@ -58,17 +58,19 @@ int main ()
 // Solution
 
     HLL_method (N, gimel, cons_vars, C);
-    
-    cons2prim (N, cons_vars, init_features, gimel); // и здесь
-    save_results (test_nmbr, x, init_features); // я не уверена, что здесь init_feat потому что не понимаю как это работает.............
+
+    primitive_variables * final_features = new primitive_variables[N];
+    cons2prim (N, cons_vars, final_features, gimel);
+
+    save_results (test_nmbr, x, final_features);
 
 // Deallocation of memory
 
     delete [] init_features;
     delete [] x;
-
     free_array(cons_vars.u);
     free_array(cons_vars.F);
+    delete [] final_features;
     
     return 0;
 }
