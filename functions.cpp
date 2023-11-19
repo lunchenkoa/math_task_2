@@ -99,6 +99,7 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
     while (t <= time_res)
     {
         cons2prim (N, cons, prims, adiabat);
+        cout << "Make cons2prim 1" << endl ;
 
         for (size_t i = 0; i < N; ++i)
             s_vel[i] = adiabat * prims[i].pres / prims[i].dens;
@@ -114,7 +115,7 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
 
         D_L[N] = s_vel[N - 1];            // kinda v_N = p_N = ρ_N = 0
         D_R[N] = prims[N - 1].vel + s_vel[N - 1];
-
+        cout << "D_L D_R" << endl ;
         for (size_t j = 0; j <= N; ++j)
         {
             F_L[0] = (prims[j].dens * prims[j].vel) - (prims[j - 1].dens * prims[j - 1].vel);
@@ -127,7 +128,7 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
             F_R[2] = (prims[j + 1].pres * prims[j + 1].vel / (adiabat - 1) + prims[j + 1].dens * pow(prims[j + 1].vel, 3) / 2 + prims[j + 1].pres * prims[j + 1].vel) -\
                      (prims[j].pres * prims[j].vel / (adiabat - 1) + prims[j].dens * pow(prims[j].vel, 3) / 2 + prims[j].pres * prims[j].vel);
 
-
+            cout << "F_L F_R" << endl ;
             
             for (size_t k = 0; k < 3; ++k)
             {
@@ -144,6 +145,7 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
                     F_star[j][k] = F_R[k];
                 }
             }
+            cout << "F_star" << endl ;
         }
 
         for (size_t j = 0; j < N; ++j)
@@ -153,6 +155,7 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
                 tmp_u[j][k] = cons.u[j][k] - dt / dx * (F_star[j + 1][k] - F_star[j][k]);
             }
         }
+        cout << "temp_u" << endl ;
         // Надо обновить граничные условня для всех индексов, кроме первого и последнего
         for (size_t j = 0; j < 3; ++j)
         {
@@ -162,6 +165,7 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
                 cons.u[i][j] = tmp_u[i - 1][j];
             }
         }
+        cout << "u" << endl ;
         
         dt = Courant * dx / max(abs(D_L[0]), abs(D_R[N]));
         t += dt;
