@@ -1,50 +1,65 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-ind = input("Enter test number from 1, 2, 3, 4: \n")
-test_data = np.genfromtxt("./results/res_test_" + ind +".txt", delimiter=' ')
-if ind == "1":
-    ro_l = 1.0; v_l = 0.0; p_l = 3.0
-    ro_r = 1.0; v_r = 0.0; p_r = 1.0
-    t = 0.18
-elif ind == "2":
-    # for test 2
-    ro_l = 1.0; v_l = 1.0; p_l = 3.0
-    ro_r = 1.0; v_r = -1.0; p_r = 1.0
-    t = 0.1
-elif ind == "3":
-    # for test 3
-    ro_l = 1.0; v_l = -0.1; p_l = 1.0
-    ro_r = 1.0; v_r = 0.2; p_r = 1.0
-    t = 0.1
-elif ind == "4":
-    ro_l = 1.0; v_l = 0.0; p_l = 1.0
-    ro_r = 1.0; v_r = 0.0; p_r = 3.0
-    t = 0.18
+while (True):
+    res_num = input("Choose a test!\nPossible input options: 1, 2, 3\n")
 
+    if res_num == "1" or res_num == "2" or res_num == "3":
+        filename = "./input/input" + res_num + ".txt" # works when launched from the math_task_2 folder
+        
+        try:
+            with open(filename, 'r') as file:
+                lines = file.read().splitlines()
 
-textstr = '\n'.join((
-    r'Initial conditions:',
-    r'$p_l=%.2f$, $p_r=%.2f$' % (p_l, p_r, ),
-    r'$\rho_l=%.2f$, $\rho_r=%.2f$' % (ro_l, ro_r, ),
-    r'$v_l=%.2f$, $v_r=%.2f$' % (v_l, v_r, ),
-    r'$t=%.2f$' % (t, )))
+            if len(lines) == 3:
+                block1 = lines[0].split()
+                block2 = lines[1].split()
+                block3 = lines[2].split()
+
+                if len(block1) == 3 and len(block2) == 3 and len(block3) == 1:
+                    rho_L, v_L, p_L = map(float, block1)
+                    rho_R, v_R, p_R = map(float, block2)
+                    time = float(block3[0])
+                else:
+                    print("File format is incorrect in terms of the number of parameters in each block.")
+            else:
+                print("File format is incorrect. It should contain 3 lines.")
+
+        except FileNotFoundError:
+            print("File not found.")
+        break
+    else:
+        print("Invalid test number.")
+
+output_data = np.genfromtxt("./solution/output" + res_num + ".txt", delimiter=' ')
+exact_solution = np.genfromtxt("./result_processing/rieman_solution/exact-sol" + res_num + ".txt", delimiter=' ')
 
 # these are matplotlib.patch.Patch properties
 props = dict(facecolor='white', alpha=0.3)
 
 fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(8, 8))
-fig.suptitle("Solution of test " + ind + ".")
-ax1.plot(test_data[:, 0], test_data[:, 1], color="#FFC900")
-# ax1.axvline(0, color='gray', linewidth=0.7, linestyle='dashed')
-ax1.set_ylabel("Pressure")
-ax2.plot(test_data[:, 0], test_data[:, 2], color="#B6FF00")
-# ax2.axvline(0, color='gray', linewidth=0.7, linestyle='dashed')
-ax2.set_ylabel("Density")
-ax3.plot(test_data[:, 0], test_data[:, 3], color="#FF4A00")
-# ax3.axvline(0, color='gray', linewidth=0.7, linestyle='dashed')
-ax3.set_ylabel("Velocity")
+fig.suptitle("Solution № " + res_num)
+
+ax1.plot(output_data[:, 0], output_data[:, 2], color="#D11428")
+ax1.plot(exact_solution[:, 0], exact_solution[:, 2], '--', color="#666666", label="Exact Solution")
+ax1.set_ylabel("Density")
+
+ax2.plot(output_data[:, 0], output_data[:, 3], color="#534491")
+ax2.plot(exact_solution[:, 0], exact_solution[:, 3], '--', color="#666666", label="Exact Solution")
+ax2.set_ylabel("Velocity")
+
+ax3.plot(output_data[:, 0], output_data[:, 1], color="#50C878")
+ax3.plot(exact_solution[:, 0], exact_solution[:, 1], '--', color="#666666", label="Exact Solution")
+ax3.set_ylabel("Pressure")
+
 ax3.set_xlabel("$x$")
-fig.text(0.8, 1.45, textstr, transform=ax1.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+
+textstr = '\n'.join((
+    r'Initial conditions:',
+    r'$\rho_L=%.1f$, $v_L=%.1f$, $p_L=%.1f,$' % (rho_L, v_L, p_L, ),
+    r'$\rho_R=%.1f$, $v_R=%.1f$, $p_R=%.1f,$' % (rho_R, v_R, p_R, ),
+    r'$t=%.2f.$' % (time, )))
+
+fig.text(0, 1.4, textstr, transform=ax1.transAxes, fontsize=9.5, verticalalignment='top')
 # plt.show()
-plt.savefig("./results/res_test_" + ind + ".png")
+plt.savefig("./graphs/solution" + res_num + ".png")
