@@ -90,8 +90,8 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
     double * D_L = create_vector(N + 1);
     double * D_R = create_vector(N + 1);
     double * s_vel = create_vector(N);
-    double * F_L = create_vector(N + 1);
-    double * F_R = create_vector(N + 1);
+    double * F_L = create_vector(3);
+    double * F_R = create_vector(3);
 
     primitive_variables * prims = new primitive_variables[N];
 
@@ -116,24 +116,31 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
 
         for (size_t j = 0; j <= N; ++j)
         {
+            F_L[0] = (prims[j].dens * prims[j].vel) - (prims[j - 1].dens * prims[j - 1].vel);
+            F_L[1]  = (prims[j].dens * pow(prims[j].vel, 2) + prims[j].pres) - (prims[j - 1].dens * pow(prims[j - 1].vel, 2) + prims[j - 1].pres) ;
+            F_L[2] = (prims[j].pres * prims[j].vel / (adiabat - 1) + prims[j].dens * pow(prims[j].vel, 3) / 2 + prims[j].pres * prims[j].vel) -\
+                     (prims[j - 1].pres * prims[j - 1].vel / (adiabat - 1) + prims[j - 1].dens * pow(prims[j - 1].vel, 3) / 2 + prims[j - 1].pres * prims[j - 1].vel);
+
+            F_R[0] = (prims[j + 1].dens * prims[j + 1].vel) - (prims[j].dens * prims[j].vel);
+            F_R[1]  = (prims[j + 1].dens * pow(prims[j + 1].vel, 2) + prims[j + 1].pres) - (prims[j].dens * pow(prims[j].vel, 2) + prims[j].pres) ;
+            F_R[2] = (prims[j + 1].pres * prims[j + 1].vel / (adiabat - 1) + prims[j + 1].dens * pow(prims[j + 1].vel, 3) / 2 + prims[j + 1].pres * prims[j + 1].vel) -\
+                     (prims[j].pres * prims[j].vel / (adiabat - 1) + prims[j].dens * pow(prims[j].vel, 3) / 2 + prims[j].pres * prims[j].vel);
+
+
+            
             for (size_t k = 0; k < 3; ++k)
             {
-                // Перевод в примитирвые переменные из u и посчитать из них для нужных индектов F-L, F_R
-
-                F_L[j] = ; // F(u_L)
-                F_R[j] = ; // F(u_R)
-
                 if (D_L[j] > 0)
                 {
-                    F_star[j][k] = F_L[j];
+                    F_star[j][k] = F_L[k];
                 }
                 else if (D_L[j] <= 0 && 0 <= D_R[j])
                 {
-                    F_star[j][k] = (-D_L[j] * F_R[j] + D_R[j] * F_L[j] + D_L[j] * D_R[j] * (u_R - u_L)) / (D_R[j] - D_L[j]);
+                    F_star[j][k] = (-D_L[j] * F_R[k] + D_R[j] * F_L[k] + D_L[j] * D_R[j] * (cons.u[j-1][k] - cons.u[j+1][k])) / (D_R[j] - D_L[j]);
                 }
                 else if (D_R[j] < 0)
                 {
-                    F_star[j][k] = F_R[j];
+                    F_star[j][k] = F_R[k];
                 }
             }
         }
