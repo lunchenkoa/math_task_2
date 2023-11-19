@@ -57,7 +57,8 @@ int main ()
 
 // Solution
 
-    HLL_method (N, gimel, cons_vars, init_features, C);
+    HLL_method (N, gimel, cons_vars, C);
+    
     cons2prim (N, cons_vars, init_features, gimel); // и здесь
     save_results (test_nmbr, x, init_features); // я не уверена, что здесь init_feat потому что не понимаю как это работает.............
 

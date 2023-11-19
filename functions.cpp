@@ -79,12 +79,13 @@ void cons2prim (int N, conservative_variables cons, primitive_variables* prims, 
 //     }
 // }
 
-void HLL_method (int N, double adiabat, conservative_variables cons, primitive_variables* prims, double Courant)
+void HLL_method (int N, double adiabat, conservative_variables cons, double Courant)
 {
     double t, dt = 0.0;
     // double u_L, u_R, F_C;
 
     double ** F_star = create_array(N + 1, 3);
+    double ** tmp_u = create_array(N, 3);
 
     double * D_L = create_vector(N + 1);
     double * D_R = create_vector(N + 1);
@@ -92,22 +93,26 @@ void HLL_method (int N, double adiabat, conservative_variables cons, primitive_v
     double * F_L = create_vector(N + 1);
     double * F_R = create_vector(N + 1);
 
+    primitive_variables * prims = new primitive_variables[N];
+
     while (t <= time)
     {
-        for (size_t i = 0; i < N; ++i)
-            s_vel[i] = adiabat * u.pres / u.dens;
+        cons2prim (N, cons, prims, adiabat);
 
-        D_L[0] = -s_vel[0];           // kinda v_{-1} = p_{-1} = ρ_{-1} = 0
-        D_R[0] = u.vel[0] + s_vel[0];
+        for (size_t i = 0; i < N; ++i)
+            s_vel[i] = adiabat * prims[i].pres / prims[i].dens;
+
+        D_L[0] = -s_vel[0];               // kinda v_{-1} = p_{-1} = ρ_{-1} = 0
+        D_R[0] = prims[0].vel + s_vel[0];
         
         for (size_t i = 1; i < N; ++i)
         {      
-            D_L[i] = min(u.vel[i - 1], u.vel[i]) - max(s_vel[i - 1], s_vel[i]);
-            D_R[i] = max(u.vel[i - 1], u.vel[i]) + max(s_vel[i - 1], s_vel[i]);
+            D_L[i] = min(prims[i - 1].vel, prims[i].vel) - max(s_vel[i - 1], s_vel[i]);
+            D_R[i] = max(prims[i - 1].vel, prims[i].vel) + max(s_vel[i - 1], s_vel[i]);
         }
 
-        D_L[N] = s_vel[N - 1];                // kinda v_N = p_N = ρ_N = 0
-        D_R[N] = u.vel[N - 1] + s_vel[N - 1];
+        D_L[N] = s_vel[N - 1];            // kinda v_N = p_N = ρ_N = 0
+        D_R[N] = prims[N - 1].vel + s_vel[N - 1];
 
         for (size_t j = 0; j <= N; ++j)
         {
@@ -137,7 +142,7 @@ void HLL_method (int N, double adiabat, conservative_variables cons, primitive_v
         {
             for (size_t k = 0; k < 3; ++k)
             {
-                tmp_u[j][k] = cons.u[j][k] - dt / dx * (F_star[j + 1][k] - F_star[j][k]); // определить temp_u
+                tmp_u[j][k] = cons.u[j][k] - dt / dx * (F_star[j + 1][k] - F_star[j][k]);
             }
         }
         // Надо обновить граничные условня для всех индексов, кроме первого и последнего
@@ -152,13 +157,16 @@ void HLL_method (int N, double adiabat, conservative_variables cons, primitive_v
         
         dt = Courant * dx / max(abs(D_L[0]), abs(D_R[N]));
         t += dt;
+
     }
     // Перевод в примитивные переменные из u
     
     free_array(F_star);
+    free_array(tmp_u);
     free_vector(D_L);
     free_vector(D_R);
     free_vector(s_vel);
     free_vector(F_L);
     free_vector(F_R);
+    delete [] prims;
 }
