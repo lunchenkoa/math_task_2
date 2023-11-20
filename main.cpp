@@ -40,7 +40,7 @@ int main ()
 
     primitive_variables left, right;
     initialization (test_file, left, right);
-    cout << "2" << endl;
+    // cout << "2" << endl;
 
 // Allocation of memory to dynamic variables
 
@@ -48,22 +48,26 @@ int main ()
     initialization_of_IC(N, init_features, left, right);              // which is half filled with 
                                                                       // left characteristics and 
                                                                       // half with right ones
-    cout << "3" << endl;
+    // cout << "3" << endl;
     double * x = create_vector(N);
     for (size_t i = 0; i < N; ++i)
-        x[i] = x_L + i * dx;
-    cout << "4" << endl;
+    {
+        x[i] = x_L + (i + 0.5) * dx;
+        cout << "xi " << x[i] << endl;
+    }
+    // cout << "4" << endl;
     conservative_variables cons_vars;
     prim2cons (N, cons_vars, init_features, gimel); // здесь работа init_features по идее кончается
 
 // Solution
-    cout << "5" << endl;
+    // cout << "5" << endl;
     HLL_method (N, gimel, cons_vars, C);
     cout << "6" << endl;
     primitive_variables * final_features = new primitive_variables[N];
     cons2prim (N, cons_vars, final_features, gimel);
+    // cout << sizeof(final_features) / sizeof(final_features[0].dens) << endl; 
     cout << "7" << endl;
-    save_results (test_nmbr, x, final_features);
+    save_results (test_nmbr, x, final_features, N);
 
 // Deallocation of memory
 

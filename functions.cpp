@@ -88,21 +88,29 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
     double ** F_star = create_array(N + 1, 3);
     double ** tmp_u = create_array(N, 3);
 
+    for (size_t k = 0; k < 3; k++)
+    {
+        tmp_u[0][k] = cons.u[0][k];
+        tmp_u[N-1][k] = cons.u[N-1][k];
+    }
+
     double * D_L = create_vector(N + 1);
     double * D_R = create_vector(N + 1);
     double * s_vel = create_vector(N);
     double * F_L = create_vector(3);
     double * F_R = create_vector(3);
 
+    // Для вычисления шага по времени надо найти v_max по всем ячейкам, после определить dt для каждого шага в начале шага.
     primitive_variables * prims = new primitive_variables[N];
-
+    int count = 0;
     while (t <= time_res)
-    {
+    {   count += count;
+        cout << "Time step = " << t << endl;
         cons2prim (N, cons, prims, adiabat);
-        cout << "Make cons2prim 1" << endl ;
+        // cout << "Make cons2prim 1" << endl ;
 
         for (size_t i = 0; i < N; ++i)
-            s_vel[i] = adiabat * prims[i].pres / prims[i].dens;
+            s_vel[i] = sqrt(adiabat * prims[i].pres / prims[i].dens);
 
         D_L[0] = -s_vel[0];               // kinda v_{-1} = p_{-1} = ρ_{-1} = 0
         D_R[0] = prims[0].vel + s_vel[0];
@@ -115,20 +123,67 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
 
         D_L[N] = s_vel[N - 1];            // kinda v_N = p_N = ρ_N = 0
         D_R[N] = prims[N - 1].vel + s_vel[N - 1];
-        cout << "D_L D_R" << endl ;
-        for (size_t j = 0; j <= N; ++j)
+        // cout << "D_L D_R" << endl ;
+
+        F_R[0] = (prims[0].dens * prims[0].vel); // (prims[1].dens * prims[1].vel); // - 
+        F_R[1]  = (prims[0].dens * pow(prims[0].vel, 2) + prims[0].pres) ; // (prims[1].dens * pow(prims[1].vel, 2) + prims[1].pres) ; //- 
+        F_R[2] = (prims[0].pres * prims[0].vel / (adiabat - 1) + prims[0].dens * pow(prims[0].vel, 3) / 2 + prims[0].pres * prims[0].vel); //  (prims[1].pres * prims[1].vel / (adiabat - 1) + prims[1].dens * pow(prims[1].vel, 3) / 2 + prims[1].pres * prims[1].vel); // -
+            
+
+        for (size_t k = 0; k < 3; k++)
         {
-            F_L[0] = (prims[j].dens * prims[j].vel) - (prims[j - 1].dens * prims[j - 1].vel);
-            F_L[1]  = (prims[j].dens * pow(prims[j].vel, 2) + prims[j].pres) - (prims[j - 1].dens * pow(prims[j - 1].vel, 2) + prims[j - 1].pres) ;
-            F_L[2] = (prims[j].pres * prims[j].vel / (adiabat - 1) + prims[j].dens * pow(prims[j].vel, 3) / 2 + prims[j].pres * prims[j].vel) -\
-                     (prims[j - 1].pres * prims[j - 1].vel / (adiabat - 1) + prims[j - 1].dens * pow(prims[j - 1].vel, 3) / 2 + prims[j - 1].pres * prims[j - 1].vel);
+            F_L[k] = 0;
+            if (D_L[0] > 0)
+            {
+                F_star[0][k] = F_L[k];
+            }
+            else if (D_L[0] <= 0 && 0 <= D_R[0])
+            {
+                F_star[0][k] = (-D_L[0] * F_R[k] + D_R[0] * F_L[k] + D_L[0] * D_R[0] * ( 0 - cons.u[1][k])) / (D_R[0] - D_L[0]);
+            }
+            else if (D_R[0] < 0)
+            {
+                F_star[0][k] = F_R[k];
+            }
+        }
 
-            F_R[0] = (prims[j + 1].dens * prims[j + 1].vel) - (prims[j].dens * prims[j].vel);
-            F_R[1]  = (prims[j + 1].dens * pow(prims[j + 1].vel, 2) + prims[j + 1].pres) - (prims[j].dens * pow(prims[j].vel, 2) + prims[j].pres) ;
-            F_R[2] = (prims[j + 1].pres * prims[j + 1].vel / (adiabat - 1) + prims[j + 1].dens * pow(prims[j + 1].vel, 3) / 2 + prims[j + 1].pres * prims[j + 1].vel) -\
-                     (prims[j].pres * prims[j].vel / (adiabat - 1) + prims[j].dens * pow(prims[j].vel, 3) / 2 + prims[j].pres * prims[j].vel);
+        F_L[0] = prims[N-1].dens * prims[N-1].vel ; // (prims[N-2].dens * prims[N-2].vel);  //
+        F_L[1]  = (prims[N-1].dens * pow(prims[N-1].vel, 2) + prims[N-1].pres) ; // (prims[N-2].dens * pow(prims[N-2].vel, 2) + prims[N-2].pres) ;  // 
+        F_L[2] =  (prims[N-1].pres * prims[N-1].vel / (adiabat - 1) + prims[N-1].dens * pow(prims[N-1].vel, 3) / 2 + prims[N-1].pres * prims[N-1].vel);// -\ (prims[N-2].pres * prims[N-2].vel / (adiabat - 1) + prims[N-2].dens * pow(prims[N-2].vel, 3) / 2 + prims[N-2].pres * prims[N-2].vel);   //
+                     
+         
+        for (size_t k = 0; k < 3; k++)
+        {
+            F_R[k] = 0;
+            if (D_L[N] > 0)
+            {
+                F_star[N][k] = F_L[k];
+            }
+            else if (D_L[N] <= 0 && 0 <= D_R[N])
+            {
+                F_star[N][k] = (-D_L[N] * F_R[k] + D_R[N] * F_L[k] + D_L[N] * D_R[N] * (cons.u[N-2][k])) / (D_R[N] - D_L[N]);
+            }
+            else if (D_R[N] < 0)
+            {
+                F_star[N][k] = F_R[k];
+            }
+        }
+        // cout  << "Make f_0" << endl;
+        for (size_t j = 1; j <= N-1; ++j)
+        {
+            F_L[0] = (prims[j - 1].dens * prims[j - 1].vel);  //  - (prims[j].dens * prims[j].vel); //
+            F_L[1]  = (prims[j - 1].dens * pow(prims[j - 1].vel, 2) + prims[j - 1].pres) ; // (prims[j].dens * pow(prims[j].vel, 2) + prims[j].pres); //  
+            F_L[2] = (prims[j - 1].pres * prims[j - 1].vel / (adiabat - 1) + prims[j - 1].dens * pow(prims[j - 1].vel, 3) / 2 + \
+            prims[j - 1].pres * prims[j - 1].vel);  // (prims[j].pres * prims[j].vel / (adiabat - 1) + prims[j].dens * pow(prims[j].vel, 3) / 2 + prims[j].pres * prims[j].vel) -\
+                     
 
-            cout << "F_L F_R" << endl ;
+            F_R[0] = (prims[j].dens * prims[j].vel);                // (prims[j +1 ].dens * prims[j + 1].vel); // - 
+            F_R[1]  = (prims[j].dens * pow(prims[j].vel, 2) + prims[j].pres) ;          // (prims[j + 1].dens * pow(prims[j + 1].vel, 2) + prims[j + 1].pres); // - 
+            F_R[2] = (prims[j].pres * prims[j].vel / (adiabat - 1) + prims[j].dens * pow(prims[j].vel, 3) / 2 + \
+            prims[j].pres * prims[j].vel);                          // (prims[j + 1].pres * prims[j + 1].vel / (adiabat - 1) + prims[j + 1].dens * pow(prims[j + 1].vel, 3) / 2 + prims[j + 1].pres * prims[j + 1].vel); // -\
+                     
+
+            // cout << "F_L F_R" << endl ;
             
             for (size_t k = 0; k < 3; ++k)
             {
@@ -138,37 +193,50 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
                 }
                 else if (D_L[j] <= 0 && 0 <= D_R[j])
                 {
-                    F_star[j][k] = (-D_L[j] * F_R[k] + D_R[j] * F_L[k] + D_L[j] * D_R[j] * (cons.u[j-1][k] - cons.u[j+1][k])) / (D_R[j] - D_L[j]);
+                    // if (j == N-1)
+                    // {
+                        F_star[j][k] = (-D_L[j] * F_R[k] + D_R[j] * F_L[k] + D_L[j] * D_R[j] * (cons.u[j][k] - cons.u[j-1][k])) / (D_R[j] - D_L[j]);
+                    // }else
+                    // {
+                    //     F_star[j][k] = (-D_L[j] * F_R[k] + D_R[j] * F_L[k] + D_L[j] * D_R[j] * (cons.u[j-1][k] - cons.u[j+1][k])) / (D_R[j] - D_L[j]);
+                    // }
                 }
                 else if (D_R[j] < 0)
                 {
                     F_star[j][k] = F_R[k];
                 }
             }
-            cout << "F_star" << endl ;
+            // cout << "F_star" << endl ;
         }
-
-        for (size_t j = 0; j < N; ++j)
+        // cout << "Alive!" << endl;
+        for (size_t j = 1; j < N-1; ++j)
         {
             for (size_t k = 0; k < 3; ++k)
             {
+                // cout << "Alive in temp!" << endl;
                 tmp_u[j][k] = cons.u[j][k] - dt / dx * (F_star[j + 1][k] - F_star[j][k]);
             }
         }
-        cout << "temp_u" << endl ;
+
+        // cout << "temp_u" << endl ;
         // Надо обновить граничные условня для всех индексов, кроме первого и последнего
         for (size_t j = 0; j < 3; ++j)
         {
             cons.u[0][j] = tmp_u[0][j];
-            for (size_t i = 1; i <= N; ++i)
+            for (size_t i = 1; i < N-1; ++i)
             {
                 cons.u[i][j] = tmp_u[i - 1][j];
             }
+            cons.u[N-1][j] = tmp_u[N-1][j];
         }
-        cout << "u" << endl ;
+        // cout << "u" << endl ;
         
-        dt = Courant * dx / max(abs(D_L[0]), abs(D_R[N]));
+        dt = Courant * dx / max();
         t += dt;
+        if (count ==1)
+        {
+            break;
+        }
 
     }
     // Перевод в примитивные переменные из u
