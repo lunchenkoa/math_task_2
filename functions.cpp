@@ -19,7 +19,9 @@ void initialization_of_IC (double * x, int N, primitive_variables* states, \
             states[i].dens = left.dens;
             states[i].vel = left.vel;
             states[i].pres = left.pres;
-        }else {
+        }
+        else
+        {
             states[i].dens = right.dens;
             states[i].vel = right.vel;
             states[i].pres = right.pres;
@@ -115,7 +117,7 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
         //     break;
         // }
         count +=1;
-        cout << "Time:" << t << endl;
+        // cout << "Time:" << t << endl;
         cons2prim (N, cons, prims, adiabat);
 
         compute_sound_speed (N, adiabat, prims, s_vel);

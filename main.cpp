@@ -44,14 +44,14 @@ int main ()
 // Allocation of memory to dynamic variables
 
     double * x = create_vector(N);
-    cout << "Init Values: " << endl;
+    // cout << "Init Values: " << endl;
     for (size_t i = 0; i < N; ++i)
     {
         x[i] = x_L + (i + 0.5) * dx;
     }
 
     primitive_variables * init_features = new primitive_variables[N]; // array for init {rho, v, p}
-    initialization_of_IC(x, N, init_features, left, right);              // which is half filled with 
+    initialization_of_IC(x, N, init_features, left, right);           // which is half filled with 
                                                                       // left characteristics and 
                                                                       // half with right ones
 

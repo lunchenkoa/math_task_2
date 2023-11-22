@@ -4,4 +4,4 @@ clean:
 	rm -fr *.o main ./solution/*.txt
 result: main
 	./main
-	# python3 ./result_processing/graphs.py
+	python3 ./result_processing/graphs.py
