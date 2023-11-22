@@ -38,16 +38,16 @@ props = dict(facecolor='white', alpha=0.3)
 fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(8, 8))
 fig.suptitle("Solution № " + res_num)
 
-ax1.plot(output_data[:, 0], output_data[:, 2], color="#D11428")
-ax1.plot(exact_solution[:, 0], exact_solution[:, 2], '--', color="#666666", label="Exact Solution")
+line1, = ax1.plot(output_data[:, 0], output_data[:, 2], color="#D11428", label="Numerical density")
+ax1.plot(exact_solution[:, 0], exact_solution[:, 2], '--', color="#666666", label="Exact solution")
 ax1.set_ylabel("Density")
 
-ax2.plot(output_data[:, 0], output_data[:, 3], color="#534491")
-ax2.plot(exact_solution[:, 0], exact_solution[:, 3], '--', color="#666666", label="Exact Solution")
+line2, = ax2.plot(output_data[:, 0], output_data[:, 3], color="#534491", label="Numerical velocity")
+ax2.plot(exact_solution[:, 0], exact_solution[:, 3], '--', color="#666666", label="Exact solution")
 ax2.set_ylabel("Velocity")
 
-ax3.plot(output_data[:, 0], output_data[:, 1], color="#50C878")
-ax3.plot(exact_solution[:, 0], exact_solution[:, 1], '--', color="#666666", label="Exact Solution")
+line3, = ax3.plot(output_data[:, 0], output_data[:, 1], color="#50C878", label="Numerical pressure")
+line4, = ax3.plot(exact_solution[:, 0], exact_solution[:, 1], '--', color="#666666", label="Exact solution")
 ax3.set_ylabel("Pressure")
 
 ax3.set_xlabel("$x$")
@@ -58,5 +58,7 @@ textstr = '\n'.join((
     r'$\rho_R=%.1f$, $v_R=%.1f$, $p_R=%.1f.$' % (rho_R, v_R, p_R, )))
 
 fig.text(0, 1.4, textstr, transform=ax1.transAxes, fontsize=9.5, verticalalignment='top')
+fig.legend(handles=[line1, line2, line3, line4], fontsize=8.5, loc='upper right', bbox_to_anchor=(0.915, 1), frameon=False)
+
 plt.show()
 # plt.savefig("./graphs/solution" + res_num + ".png")
