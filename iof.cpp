@@ -27,20 +27,16 @@ bool initialization (string& test, primitive_variables& left, primitive_variable
     return true;
 }
 
+// The function of writing data to a file
+
 bool save_results (string test, double* x, primitive_variables* states, int N)
 {
-    string result = "";
-    result = "output" + test + ".txt";
+    string res_path = "./solution/output" + test + ".txt";
 
-    string res_path = "./solution/" + result;
-
-    cout << "Size of x = " << sizeof(x) / sizeof(x[0]) << endl;
     ofstream output(res_path);
     if (output.is_open())
     {
-        // int array_length = sizeof(x) / sizeof(x[0]);
         for (size_t i = 0; i < N; ++i)
-            // cout << "x[" << i << "] = " << x[i] << ", d[i] = " << states[i].dens << ", v[i] =  " << states[i].vel << ", p[i] =  " << states[i].pres << '\n';
             output << x[i] << " " << states[i].dens << " " << states[i].vel << " " << states[i].pres << '\n';
     }
     else
