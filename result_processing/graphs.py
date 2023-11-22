@@ -38,15 +38,15 @@ props = dict(facecolor='white', alpha=0.3)
 fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(8, 8))
 fig.suptitle("Solution № " + res_num)
 
-line1, = ax1.plot(output_data[:, 0], output_data[:, 2], color="#D11428", label="Numerical density")
+line1, = ax1.plot(output_data[:, 0], output_data[:, 1], color="#D11428", label="Numerical density")
 ax1.plot(exact_solution[:, 0], exact_solution[:, 2], '--', color="#666666", label="Exact solution")
 ax1.set_ylabel("Density")
 
-line2, = ax2.plot(output_data[:, 0], output_data[:, 3], color="#534491", label="Numerical velocity")
+line2, = ax2.plot(output_data[:, 0], output_data[:, 2], color="#534491", label="Numerical velocity")
 ax2.plot(exact_solution[:, 0], exact_solution[:, 3], '--', color="#666666", label="Exact solution")
 ax2.set_ylabel("Velocity")
 
-line3, = ax3.plot(output_data[:, 0], output_data[:, 1], color="#50C878", label="Numerical pressure")
+line3, = ax3.plot(output_data[:, 0], output_data[:, 3], color="#50C878", label="Numerical pressure")
 line4, = ax3.plot(exact_solution[:, 0], exact_solution[:, 1], '--', color="#666666", label="Exact solution")
 ax3.set_ylabel("Pressure")
 

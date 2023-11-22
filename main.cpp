@@ -43,13 +43,17 @@ int main ()
 
 // Allocation of memory to dynamic variables
 
+    double * x = create_vector(N);
+    cout << "Init Values: " << endl;
+    for (size_t i = 0; i < N; ++i)
+    {
+        x[i] = x_L + (i + 0.5) * dx;
+    }
+
     primitive_variables * init_features = new primitive_variables[N]; // array for init {rho, v, p}
-    initialization_of_IC(N, init_features, left, right);              // which is half filled with 
+    initialization_of_IC(x, N, init_features, left, right);              // which is half filled with 
                                                                       // left characteristics and 
                                                                       // half with right ones
-    double * x = create_vector(N);
-    for (size_t i = 0; i < N; ++i)
-        x[i] = x_L + (i + 0.5) * dx;
 
     conservative_variables cons_vars;
     cons_vars.u = create_array(N, 3);
@@ -58,6 +62,12 @@ int main ()
 // Solution
 
     prim2cons (N, cons_vars, init_features, gimel); // fill the cons_vars
+
+    // for (size_t i = 0; i < N; ++i)
+    // {
+    //     // cout << "i = " << i << " x = " << x[i] << " P = " << init_features[i].pres << " Rho = " << init_features[i].dens << " V = " << init_features[i].vel << endl;
+    //     // cout << "i = " << i << " x = " << x[i] << " u = " << cons_vars.u[i][0] << ", " << cons_vars.u[i][1] << ", " << cons_vars.u[i][2] << ", " <<  " F = " <<  cons_vars.F[i][0] << ", " << cons_vars.F[i][1] << ", " << cons_vars.F[i][2] << endl;
+    // }
 
     HLL_method (N, gimel, cons_vars, C);
 

@@ -11,7 +11,7 @@ struct primitive_variables
 };
 
 // a moment of time
-    static double time_res = 0.10;
+    static double time_res = 0.01;
 
 /*
     Since there is a gamma() in C++, let’s replace the letter γ with the third letter of the

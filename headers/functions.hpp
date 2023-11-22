@@ -4,7 +4,7 @@
 #ifndef GOD_FUNC
 #define GOD_FUNC
 
-void initialization_of_IC (int N, primitive_variables* states, \
+void initialization_of_IC (double * x, int N, primitive_variables* states, \
                                   primitive_variables& left, primitive_variables& right);
 void prim2cons (int N, conservative_variables cons, primitive_variables* prims, double adiabat);
 void cons2prim (int N, conservative_variables cons, primitive_variables* prims, double adiabat);

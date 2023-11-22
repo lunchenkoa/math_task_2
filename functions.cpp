@@ -9,21 +9,21 @@
 
 using namespace std;
 
-void initialization_of_IC (int N, primitive_variables* states, \
+void initialization_of_IC (double * x, int N, primitive_variables* states, \
                                   primitive_variables& left, primitive_variables& right)
 {
-    for (size_t i = 0; i < N / 2 + 1; ++i)
+    for (size_t i = 0; i < N; ++i)
     {
-        states[i].dens = left.dens;
-        states[i].vel = left.vel;
-        states[i].pres = left.pres;
-    }
-
-    for (size_t i = N / 2 + 1; i < N; ++i)
-    {
-        states[i].dens = right.dens;
-        states[i].vel = right.vel;
-        states[i].pres = right.pres;
+        if (x[i] < 0)
+        {
+            states[i].dens = left.dens;
+            states[i].vel = left.vel;
+            states[i].pres = left.pres;
+        }else {
+            states[i].dens = right.dens;
+            states[i].vel = right.vel;
+            states[i].pres = right.pres;
+        }
     }
 }
 
@@ -106,26 +106,30 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
     double * F_R = create_vector(3);
 
     primitive_variables * prims = new primitive_variables[N];
-
-    // int count = 0;
+    int count = 0;
 
     while (t <= time_res)
     {   
-        // count += count;
-        // cout << "Time step = " << t << endl;
+        // if (count == 0)
+        // {
+        //     break;
+        // }
+        count +=1;
+        cout << "Time:" << t << endl;
         cons2prim (N, cons, prims, adiabat);
 
         compute_sound_speed (N, adiabat, prims, s_vel);
         v_max = compute_max_velocity (N, adiabat, prims, s_vel);
         dt = Courant * dx / v_max;
-
-        // D_L[0] = -s_vel[0];               // kinda v_{-1} = p_{-1} = ρ_{-1} = 0
-        // D_R[0] = prims[0].vel + s_vel[0];
         
         for (size_t i = 1; i < N; ++i)
-        {      
+        {   
+            // cout << " i = " << i <<" vel =" << prims[i].vel << ",  s_vel  = " << s_vel[i] << endl;
             D_L[i] = min(prims[i - 1].vel, prims[i].vel) - max(s_vel[i - 1], s_vel[i]);
             D_R[i] = max(prims[i - 1].vel, prims[i].vel) + max(s_vel[i - 1], s_vel[i]);
+            // cout << "D_L = " << D_L[i] << " D_R = " << D_R[i] << endl;
+            // cout << " i = " << i <<" D_L =" << D_L[i] << ",  D_R  = " << D_R[i] << endl;
+        
         }
 
         // D_L[N] = s_vel[N - 1];            // kinda v_N = p_N = ρ_N = 0
@@ -209,6 +213,7 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
                     F_star[j][k] = F_R[k];
                 }
             }
+            // cout << " j = " << j <<" F_star =" << F_star[j][0] << ",  " << F_star[j][1] << ",  " << F_star[j][2] << endl;
         }
         
         for (size_t j = 1; j < N - 1; ++j)
