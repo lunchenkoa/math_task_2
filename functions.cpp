@@ -116,6 +116,15 @@ void HLL_method (int N, double adiabat, conservative_variables cons, double Cour
         // {
         //     break;
         // }
+        // for (size_t k = 0; k < 3; ++k)
+        // {
+        //     cons.u[0][k] = tmp_u[0][k];
+
+        //     for (size_t j = 1; j < N - 1; ++j)
+        //         cons.u[j][k] = tmp_u[j - 1][k];
+
+        //     cons.u[N - 1][k] = tmp_u[N - 1][k];
+        // }
         count +=1;
         // cout << "Time:" << t << endl;
         cons2prim (N, cons, prims, adiabat);
