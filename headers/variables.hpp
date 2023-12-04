@@ -1,4 +1,9 @@
 #include "de_allocate.hpp"
+#include <Eigen/Dense>
+
+using Eigen::MatrixXd;
+using Eigen::VectorXd;
+
 
 #ifndef VAR_FUNC
 #define VAR_FUNC

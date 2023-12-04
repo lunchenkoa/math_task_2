@@ -1,12 +1,16 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-
+#include <vector>
+#include <Eigen/Dense>
+ 
 #include "headers/variables.hpp"
 #include "headers/iof.hpp"
 #include "headers/functions.hpp"
 #include "headers/de_allocate.hpp"
 
+using Eigen::MatrixXd;
+using Eigen::VectorXd;
 using namespace std;
 
 int main ()
@@ -43,25 +47,32 @@ int main ()
 
 // Allocation of memory to dynamic variables
 
-    double * x = create_vector(N);
+    // double * x = create_vector(N);
+    VectorXd x(N);
     // cout << "Init Values: " << endl;
     for (size_t i = 0; i < N; ++i)
     {
-        x[i] = x_L + (i + 0.5) * dx;
+        x(i) = x_L + (i + 0.5) * dx;
     }
 
-    primitive_variables * init_features = new primitive_variables[N]; // array for init {rho, v, p}
-    initialization_of_IC(x, N, init_features, left, right);           // which is half filled with 
+    vector<primitive_variables> init_features;
+    init_features.resize(N);
+    // primitive_variables * init_features = new primitive_variables[N]; // array for init {rho, v, p}
+    initialization_of_IC( x, N, init_features, left, right);           // which is half filled with 
                                                                       // left characteristics and 
                                                                       // half with right ones
 
-    conservative_variables cons_vars;
-    cons_vars.u = create_array(N, 3);
-    cons_vars.F = create_array(N, 3);
+    // conservative_variables cons_vars;
+    // cons_vars.u = create_array(N, 3);
+    // cons_vars.F = create_array(N, 3);
+    MatrixXd u(N,3);
+    MatrixXd F(N,3);
 
 // Solution
 
-    prim2cons (N, cons_vars, init_features, gimel); // fill the cons_vars
+    // prim2cons (N, cons_vars, init_features, gimel); // fill the cons_vars
+    prim2cons (N, u, F, init_features, gimel); // fill the cons_vars
+
 
     // for (size_t i = 0; i < N; ++i)
     // {
@@ -69,20 +80,22 @@ int main ()
     //     // cout << "i = " << i << " x = " << x[i] << " u = " << cons_vars.u[i][0] << ", " << cons_vars.u[i][1] << ", " << cons_vars.u[i][2] << ", " <<  " F = " <<  cons_vars.F[i][0] << ", " << cons_vars.F[i][1] << ", " << cons_vars.F[i][2] << endl;
     // }
 
-    HLL_method (N, gimel, cons_vars, C);
+    HLL_method (N, gimel, u, F, C);
 
-    primitive_variables * final_features = new primitive_variables[N];
-    cons2prim (N, cons_vars, final_features, gimel);
+    // primitive_variables * final_features = new primitive_variables[N];
+    vector<primitive_variables> final_features;
+    final_features.resize(N);
+    cons2prim (N, u, F, final_features, gimel);
 
     save_results (test_nmbr, x, final_features, N);
 
 // Deallocation of memory
 
-    delete [] init_features;
-    delete [] x;
-    free_array(cons_vars.u);
-    free_array(cons_vars.F);
-    delete [] final_features;
+    // delete [] init_features;
+    // delete [] x;
+    // free_array(cons_vars.u);
+    // free_array(cons_vars.F);
+    // delete [] final_features;
     
     return 0;
 }

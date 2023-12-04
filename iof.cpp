@@ -1,6 +1,11 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
+#include <Eigen/Dense>
+ 
+using Eigen::MatrixXd;
+using Eigen::VectorXd;
 
 #include "headers/variables.hpp"
 
@@ -29,7 +34,7 @@ bool initialization (string& test, primitive_variables& left, primitive_variable
 
 // The function of writing data to a file
 
-bool save_results (string test, double* x, primitive_variables* states, int N)
+bool save_results (string test, VectorXd x, vector<primitive_variables> states, int N)
 {
     string res_path = "./solution/output" + test + ".txt";
 
