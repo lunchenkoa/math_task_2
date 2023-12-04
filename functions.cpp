@@ -145,7 +145,7 @@ void HLL_method (int N, double adiabat, MatrixXd u, MatrixXd F, double Courant)
         //     cons.u[N - 1][k] = tmp_u[N - 1][k];
         // }
         count +=1;
-        // cout << "Time:" << t << endl;
+        cout << "Time:" << t << endl;
         cons2prim (N, u, F, prims, adiabat);
 
         compute_sound_speed (N, adiabat, prims, s_vel);
@@ -259,8 +259,11 @@ void HLL_method (int N, double adiabat, MatrixXd u, MatrixXd F, double Courant)
 
             u(N - 1, k) = tmp_u(N - 1, k);
         }
-        
+
         t += dt;
+        cout << "Time step : " << dt << endl;
+        cout << "New time:" << t << endl;
+
         // if (count == 1)
         //     break;
     }

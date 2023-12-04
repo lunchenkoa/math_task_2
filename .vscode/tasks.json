@@ -1,23 +1,26 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "build_deb",
-            "type": "shell",
-            "command": "mkdir -p build_deb ; cd build_deb; cmake .. -DCMAKE_BUILD_TYPE=Debug; make -j8",
-            "problemMatcher": [
-                "$gcc"
-            ]
-        },
-        {
-            "label": "build_rel",
-            "type": "shell",
-            "command": "mkdir -p build_rel ; cd build_rel; cmake .. -DCMAKE_BUILD_TYPE=Release; make -j8",
-            "problemMatcher": [
-                "$gcc"
-            ]
-        }
-    ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "C/C++: g++-11 build active file",
+			"command": "/usr/bin/g++-11",
+			"args": [
+				"-fdiagnostics-color=always",
+				"-g",
+				"${file}", "functions.cpp", "iof.cpp",
+				"-o",
+				"${fileDirname}/${fileBasenameNoExtension}",
+				"-I", "/usr/local/include/eigen-3.4.0/"
+			],
+			"options": {
+				"cwd": "${fileDirname}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build",
+			"detail": "compiler: /usr/bin/g++-11"
+		}
+	]
 }

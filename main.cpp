@@ -49,7 +49,7 @@ int main ()
 
     // double * x = create_vector(N);
     VectorXd x(N);
-    // cout << "Init Values: " << endl;
+    // cout << "Init Values: " << endl;1
     for (size_t i = 0; i < N; ++i)
     {
         x(i) = x_L + (i + 0.5) * dx;
