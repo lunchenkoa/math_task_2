@@ -15,78 +15,78 @@ using namespace std;
 
 // void initialization_of_IC (double * x, int N, primitive_variables* states, \
                                 //   primitive_variables& left, primitive_variables& right)
-void initialization_of_IC (VectorXd x, int N, vector<primitive_variables> states, \
-  primitive_variables& left, primitive_variables& right)
+void initialization_of_IC (VectorXd x, int N, vector<double>& dens, vector<double>& vel, vector<double>& pres, \
+  vector<double>& left, vector<double>& right)
 {
     for (size_t i = 0; i < N; ++i)
     {
         if (x[i] < 0)
         {
-            states[i].dens = left.dens;
-            states[i].vel = left.vel;
-            states[i].pres = left.pres;
+            dens[i] = left[0];
+            vel[i] = left[1];
+            pres[i] = left[2];
         }
         else
         {
-            states[i].dens = right.dens;
-            states[i].vel = right.vel;
-            states[i].pres = right.pres;
+            dens[i] = right[0];
+            vel[i] = right[1];
+            pres[i] = right[2];
         }
     }
 }
 
 // void prim2cons (int N, conservative_variables cons, primitive_variables* prims, double adiabat)
-void prim2cons (int N, MatrixXd u, MatrixXd F, vector<primitive_variables> prims, double adiabat)
+void prim2cons (int N, double** u, double** F, vector<double> dens, vector<double> vel, vector<double> pres, double adiabat)
 {
     for (size_t i = 0; i < N; ++i)
     {
-        u(i, 0) = prims[i].dens;
-        u(i, 1) = prims[i].dens * prims[i].vel;
+         u[i][0] = dens[i];
+         u[i][1] = dens[i] * vel[i];
         // equation closing the system:
         //     p = ρε(γ-1), i.e. ε = p / (ρ(γ-1)),
         // therefore, the 3d component of the vector u:
         //     ρ(ε + v^2 / 2) = p / (γ-1) + ρv^2 / 2.
-        u(i, 2) = prims[i].pres / (adiabat - 1) + prims[i].dens * pow(prims[i].vel, 2) / 2;
+         u[i][2] = pres[i] / (adiabat - 1) + dens[i] * pow(vel[i], 2) / 2;
     }
 
     for (size_t i = 0; i < N; ++i)
     {
-        F(i, 0) = prims[i].dens * prims[i].vel;
-        F(i, 1) = prims[i].dens * pow(prims[i].vel, 2) + prims[i].pres;
+         F[i][0] = dens[i] * vel[i];
+         F[i][1] = dens[i] * pow(vel[i], 2) + pres[i];
         // similarly, the 3d component of the vector F:
         //     ρv(ε + v^2 / 2 + p / ρ) = pv / (γ-1) + ρv^3 / 2 + pv.
-        F(i, 2) = prims[i].pres * prims[i].vel / (adiabat - 1) + prims[i].dens * \
-                       pow(prims[i].vel, 3) / 2 + prims[i].pres * prims[i].vel;
+         F[i][2] = pres[i] * vel[i] / (adiabat - 1) + dens[i] * \
+                       pow(vel[i], 3) / 2 + pres[i] * vel[i];
     }
 }
 
 // void cons2prim (int N, conservative_variables cons, primitive_variables* prims, double adiabat)
-void cons2prim (int N, MatrixXd u, MatrixXd F, vector<primitive_variables> prims, double adiabat)
+void cons2prim (int N, double** u, double** F, vector<double> dens, vector<double> vel, vector<double> pres, double adiabat)
 {
     for (size_t i = 0; i < N; ++i)
     {
-        prims[i].dens = u(i, 0);
-        prims[i].vel =  u(i, 1) / prims[i].dens;
-        prims[i].pres = (u(i, 2) - prims[i].dens * pow(prims[i].vel, 2) / 2) * (adiabat - 1);
+        dens[i] =  u[i][0];
+        vel[i]=   u[i][1] / dens[i];
+        pres[i] = ( u[i][2] - dens[i] * pow(vel[i], 2) / 2) * (adiabat - 1);
     }
 }
 
-void compute_sound_speed (int N, double adiabat, vector<primitive_variables> prims, VectorXd speed_res)
+void compute_sound_speed (int N, double adiabat, vector<double> dens, vector<double> pres, VectorXd speed_res)
 {
     for (size_t i = 0; i < N; ++i)
-        speed_res(i) = sqrt(adiabat * prims[i].pres / prims[i].dens);
+        speed_res(i) = sqrt(adiabat * pres[i] / dens[i]);
 }
 
-double compute_max_velocity (int N, double adiabat, vector<primitive_variables> prims, VectorXd speed_res)
+double compute_max_velocity (int N, double adiabat, vector<double> dens, vector<double> vel, vector<double> pres, VectorXd speed_res)
 {
-    compute_sound_speed (N, adiabat, prims, speed_res);
+    compute_sound_speed (N, adiabat, dens, pres, speed_res);
 
     // double * speed_each_cell = create_vector(N);
     VectorXd speed_each_cell(N);
 
     for (size_t j = 0; j < N; ++j)
     {
-        speed_each_cell(j) = abs(prims[j].vel) + speed_res(j);
+        speed_each_cell(j) = abs(vel[j]) + speed_res(j);
     }
 
     // double max_vel = *max_element(speed_each_cell, speed_each_cell + N);
@@ -97,20 +97,20 @@ double compute_max_velocity (int N, double adiabat, vector<primitive_variables> 
     return max_vel;
 }
 
-void HLL_method (int N, double adiabat, MatrixXd u, MatrixXd F, double Courant)
+void HLL_method (int N, double adiabat, double** u, double** F, double Courant)
 {
-    double t, dt = 0.0;
+    double t = 0.0, dt = 0.0;
     double v_max = 0;
 
-    // double ** F_star = create_array(N + 1, 3);
-    // double ** tmp_u = create_array(N, 3);
-    MatrixXd F_star(N + 1, 3);
-    MatrixXd tmp_u(N, 3);
+    double ** F_star = create_array(N + 1, 3);
+    double ** tmp_u = create_array(N, 3);
+    // MatrixXd F_star[N + 1, 3);
+    // MatrixXd tmp_ u[N, 3);
 
     for (size_t k = 0; k < 3; k++)
     {
-        tmp_u(0, k) = u(0, k);
-        tmp_u(N - 1, k) = u(N - 1, k);
+        tmp_u[0][k] = u[0][k];
+        tmp_u[N - 1][k] = u[N - 1][k];
     }
 
     // double * D_L = create_vector(N + 1);
@@ -124,8 +124,12 @@ void HLL_method (int N, double adiabat, MatrixXd u, MatrixXd F, double Courant)
     VectorXd F_L(3);
     VectorXd F_R(3);
 
-    vector<primitive_variables> prims;
-    prims.resize(N);
+    // primitive_variables prims;
+    vector<double> dens, vel, pres;
+    dens.resize(N);
+     vel.resize(N);
+    pres.resize(N);
+    //  resize(N);
 
     int count = 0;
 
@@ -146,17 +150,17 @@ void HLL_method (int N, double adiabat, MatrixXd u, MatrixXd F, double Courant)
         // }
         count +=1;
         cout << "Time:" << t << endl;
-        cons2prim (N, u, F, prims, adiabat);
+        cons2prim (N, u, F, dens, vel, pres, adiabat);
 
-        compute_sound_speed (N, adiabat, prims, s_vel);
-        v_max = compute_max_velocity (N, adiabat, prims, s_vel);
+        compute_sound_speed (N, adiabat, dens, pres, s_vel);
+        v_max = compute_max_velocity (N, adiabat, dens, vel, pres, s_vel);
         dt = Courant * dx / v_max;
         
         for (size_t i = 1; i < N; ++i)
         {   
             // cout << " i = " << i <<" vel =" << prims[i].vel << ",  s_vel  = " << s_vel[i] << endl;
-            D_L(i) = min(prims[i - 1].vel, prims[i].vel) - max(s_vel(i - 1), s_vel(i));
-            D_R(i) = max(prims[i - 1].vel, prims[i].vel) + max(s_vel(i - 1), s_vel(i));
+            D_L(i) = min(vel[i - 1], vel[i]) - max(s_vel(i - 1), s_vel(i));
+            D_R(i) = max(vel[i - 1], vel[i]) + max(s_vel(i - 1), s_vel(i));
             // cout << "D_L = " << D_L[i] << " D_R = " << D_R[i] << endl;
             // cout << " i = " << i <<" D_L =" << D_L[i] << ",  D_R  = " << D_R[i] << endl;
         
@@ -217,30 +221,30 @@ void HLL_method (int N, double adiabat, MatrixXd u, MatrixXd F, double Courant)
 
         for (size_t j = 1; j < N; ++j)
         {
-            F_L(0) = prims[j - 1].dens * prims[j - 1].vel;
-            F_L(1) = prims[j - 1].dens * pow(prims[j - 1].vel, 2) + prims[j - 1].pres;
-            F_L(2) = prims[j - 1].pres * prims[j - 1].vel / (adiabat - 1) + prims[j - 1].dens * \
-                 pow(prims[j - 1].vel, 3) / 2 + prims[j - 1].pres * prims[j - 1].vel;
+            F_L(0) = dens[j - 1] * vel[j - 1];
+            F_L(1) =  dens[j - 1] * pow( vel[j - 1], 2) +  pres[j - 1];
+            F_L(2) =  pres[j - 1] *  vel[j - 1] / (adiabat - 1) +  dens[j - 1] * \
+                 pow( vel[j - 1], 3) / 2 +  pres[j - 1] *  vel[j - 1];
                
-            F_R(0) = prims[j].dens * prims[j].vel;
-            F_R(1) = prims[j].dens * pow(prims[j].vel, 2) + prims[j].pres;
-            F_R(2) = prims[j].pres * prims[j].vel / (adiabat - 1) + prims[j].dens * \
-                     pow(prims[j].vel, 3) / 2 + prims[j].pres * prims[j].vel;
+            F_R(0) =  dens[j] *  vel[j];
+            F_R(1) =  dens[j] * pow( vel[j], 2) +  pres[j];
+            F_R(2) =  pres[j] * vel[j] / (adiabat - 1) +  dens[j] * \
+                     pow(vel[j], 3) / 2 +  pres[j] *  vel[j];
             
             for (size_t k = 0; k < 3; ++k)
             {
                 if (D_L(j) > 0)
                 {
-                    F_star(j, k) = F_L(k);
+                    F_star[j][k] = F_L(k);
                 }
                 else if (D_L(j) <= 0 && 0 <= D_R(j))
                 {
-                    F_star(j, k) = (-D_L(j) * F_R(k) + D_R(j) * F_L(k) + D_L(j) * D_R(j) * \
-                                   (u(j, k) - u(j - 1, k))) / (D_R(j) - D_L(j));
+                    F_star[j][k] = (-D_L(j) * F_R(k) + D_R(j) * F_L(k) + D_L(j) * D_R(j) * \
+                                   ( u[j, k] -  u[j - 1, k])) / (D_R(j) - D_L(j));
                 }
                 else if (D_R(j) < 0)
                 {
-                    F_star(j, k) = F_R(k);
+                    F_star[j][k] = F_R(k);
                 }
             }
             // cout << " j = " << j <<" F_star =" << F_star[j][0] << ",  " << F_star[j][1] << ",  " << F_star[j][2] << endl;
@@ -248,16 +252,15 @@ void HLL_method (int N, double adiabat, MatrixXd u, MatrixXd F, double Courant)
         
         for (size_t j = 1; j < N - 1; ++j)
             for (size_t k = 0; k < 3; ++k)
-                tmp_u(j, k) = u(j, k) - dt / dx * (F_star(j + 1, k) - F_star(j, k));
+                tmp_u[j][k] =  u[j][k] - dt / dx * (F_star[j + 1][k] - F_star[j][k]);
 
         for (size_t k = 0; k < 3; ++k)
         {
-            u(0, k) = tmp_u(0, k);
+            u[0][k] = tmp_u[0][k];
 
             for (size_t j = 1; j < N - 1; ++j)
-                u(j, k) = tmp_u(j - 1, k);
-
-            u(N - 1, k) = tmp_u(N - 1, k);
+                u[j][k] = tmp_u[j - 1][k];
+            u[N - 1][k] = tmp_u[N - 1][k];
         }
 
         t += dt;

@@ -1,20 +1,13 @@
 #include "de_allocate.hpp"
+#include <vector>
 #include <Eigen/Dense>
-
-using Eigen::MatrixXd;
-using Eigen::VectorXd;
-
 
 #ifndef VAR_FUNC
 #define VAR_FUNC
 
-struct primitive_variables
-{
-    double dens;    // ρ (gas density)
-    double vel;     // v (gas velocity)
-    double pres;    // p (gas pressure)
-};
-
+using Eigen::MatrixXd;
+using Eigen::VectorXd;
+using namespace std;
 // a moment of time
     static double time_res = 0.01;
 
@@ -35,7 +28,7 @@ struct conservative_variables
     double** u;    // u = {ρ, ρ*v, E}, where E = p/(γ-1)+ρ*v*v/2
     double** F;    // F = {ρ*v, ρ*v*v+p, p*v/(γ-1)+ρ*v*v*v/2+p*v}
 
-    // conservative_variables() : u(create_array(N, 3)), F(create_array(N, 3)) {}
+    // conservative_variables() :  u[create_array(N, 3)), F(create_array(N, 3)) {}
 
     // ~conservative_variables()
     // {
@@ -47,6 +40,21 @@ struct conservative_variables
     //     delete[] u;
     //     delete[] F;
     // }
+};
+
+
+struct primitive_variables     // cnhernehf bp dtrnjhjd
+{
+    // VectorXd dens(N);
+    // VectorXd vel(N);
+    // VectorXd pres(N);
+    // primitive_variables.dens.resize(N);
+    // primitive_variables.vel.resize(N);
+    // primitive_variables.pres.resize(N);
+    
+    // double dens;    // ρ (gas density)
+    // double vel;     // v (gas velocity)
+    // double pres;    // p (gas pressure)
 };
 
 #endif

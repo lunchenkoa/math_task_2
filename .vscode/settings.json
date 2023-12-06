@@ -70,6 +70,10 @@
         "cfenv": "cpp",
         "cinttypes": "cpp",
         "typeindex": "cpp",
-        "variant": "cpp"
-    }
+        "variant": "cpp",
+        "hash_map": "cpp",
+        "valarray": "cpp",
+        "unordered_set": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

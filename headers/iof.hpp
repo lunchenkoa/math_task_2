@@ -11,7 +11,7 @@ using namespace std;
 #ifndef IOF_INCLUDED
 #define IOF_INCLUDED
 
-bool initialization (string& test, primitive_variables& left, primitive_variables& right);
-bool save_results (string test, VectorXd x, vector<primitive_variables> states, int N);
+bool initialization (string& test, vector<double>& left, vector<double>& right);
+bool save_results (string test, VectorXd x,  vector<double> dens, vector<double> vel, vector<double> pres, int N);
 
 #endif

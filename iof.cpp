@@ -13,7 +13,7 @@ using namespace std;
 
 // The function of reading data from a file
 
-bool initialization (string& test, primitive_variables& left, primitive_variables& right)
+bool initialization (string& test, vector<double>& left, vector<double>& right)
 {
     ifstream input(test);
     if (!input.is_open())
@@ -22,7 +22,7 @@ bool initialization (string& test, primitive_variables& left, primitive_variable
         return false;
     }
 
-    if (!(input >> left.dens >> left.vel >> left.pres >> right.dens >> right.vel >> right.pres))
+    if (!(input >> left[0] >> left[1] >> left[2] >> right[0] >> right[1] >> right[2]))
     {
         cerr << "Error reading data from file " << test << '\n';
         return false;
@@ -34,7 +34,7 @@ bool initialization (string& test, primitive_variables& left, primitive_variable
 
 // The function of writing data to a file
 
-bool save_results (string test, VectorXd x, vector<primitive_variables> states, int N)
+bool save_results (string test, VectorXd x,  vector<double> dens, vector<double> vel, vector<double> pres, int N)
 {
     string res_path = "./solution/output" + test + ".txt";
 
@@ -42,7 +42,7 @@ bool save_results (string test, VectorXd x, vector<primitive_variables> states, 
     if (output.is_open())
     {
         for (size_t i = 0; i < N; ++i)
-            output << x[i] << " " << states[i].dens << " " << states[i].vel << " " << states[i].pres << '\n';
+            output << x[i] << " " << dens[i] << " " << vel[i] << " " << pres[i] << '\n';
     }
     else
     {
