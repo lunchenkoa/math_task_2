@@ -2,15 +2,12 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <Eigen/Dense>
  
 #include "headers/variables.hpp"
 #include "headers/iof.hpp"
 #include "headers/functions.hpp"
 #include "headers/de_allocate.hpp"
 
-using Eigen::MatrixXd;
-using Eigen::VectorXd;
 using namespace std;
 
 int main ()
@@ -49,17 +46,15 @@ int main ()
 
 // Allocation of memory to dynamic variables
 
-    // double * x = create_vector(N);
-    VectorXd x(N);
+    vector<double> x;
+    x.resize(N);
     // cout << "Init Values: " << endl;1
     for (size_t i = 0; i < N; ++i)
     {
-        x(i) = x_L + (i + 0.5) * dx;
+        x[i] = x_L + (i + 0.5) * dx;
     }
 
-    // vector<primitive_variables> init_features;
-    // init_features.resize(N);
-    // primitive_variables init_features;
+
     vector<double> dens, vel, pres;
     dens.resize(N);
      vel.resize(N);
@@ -69,13 +64,14 @@ int main ()
                                                                       // left characteristics and 
                                                                       // half with right ones
 
-    // conservative_variables cons_vars;
-    double ** u;
-    double** F;
-    u = create_array(N, 3);
-    F = create_array(N, 3);
-    // MatrixXd  u[N,3);
-    // MatrixXd F(N,3);
+    vector<vector<double>> u, F;
+    u.resize(3);
+    F.resize(3);
+    for (size_t var = 0; var < 3; var++)
+    {
+        u[var].resize(N);
+        F[var].resize(N);
+    }
 
 // Solution
 
@@ -108,8 +104,8 @@ int main ()
 
     // delete [] init_features;
     // delete [] x;
-    free_array(u);
-    free_array(F);
+    // free_array(u);
+    // free_array(F);
     // delete [] final_features;
     
     return 0;
