@@ -1,10 +1,10 @@
 #include <string>
 #include "variables.hpp"
 #include <vector>
-#include <Eigen/Dense>
+// #include <Eigen/Dense>
 
-using Eigen::MatrixXd;
-using Eigen::VectorXd;
+// using Eigen::MatrixXd;
+// using Eigen::VectorXd;
 using namespace std;
 
 

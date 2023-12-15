@@ -10,8 +10,7 @@
 				"-g",
 				"${file}", "functions.cpp", "iof.cpp", "de_allocate.cpp",
 				"-o",
-				"${fileDirname}/${fileBasenameNoExtension}",
-				"-I", "/usr/local/include/eigen-3.4.0/"
+				"${fileDirname}/${fileBasenameNoExtension}"
 			],
 			"options": {
 				"cwd": "${fileDirname}"

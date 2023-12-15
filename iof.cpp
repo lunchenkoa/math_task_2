@@ -2,10 +2,6 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <Eigen/Dense>
- 
-using Eigen::MatrixXd;
-using Eigen::VectorXd;
 
 #include "headers/variables.hpp"
 
@@ -34,7 +30,8 @@ bool initialization (string& test, vector<double>& left, vector<double>& right)
 
 // The function of writing data to a file
 
-bool save_results (string test, vector<double> x,  vector<double> dens, vector<double> vel, vector<double> pres, int N)
+bool save_results (string test, vector<double> x,  vector<double> dens, vector<double> vel, \
+                   vector<double> pres, int N)
 {
     string res_path = "./solution/output" + test + ".txt";
 
