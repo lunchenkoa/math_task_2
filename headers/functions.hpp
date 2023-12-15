@@ -1,14 +1,12 @@
-// #include <string>
-#include "variables.hpp"
 #include <vector>
+#include "variables.hpp"
 
 #ifndef GOD_FUNC
 #define GOD_FUNC
 
 using namespace std;
 
-void initialization_of_IC (vector<double> x, int N, vector<double>& dens, vector<double>& vel, vector<double>& pres, \
-  vector<double>& left, vector<double>& right);
+void initialization_of_IC (vector<double> x, int N, vector<double>& dens, vector<double>& vel, vector<double>& pres, vector<double>& left, vector<double>& right);
 void prim2cons (int N, vector<vector<double>>& u, vector<vector<double>>& F, vector<double> dens, vector<double> vel, vector<double> pres, double adiabat);
 void cons2prim (int N, vector<vector<double>> u, vector<vector<double>> F, vector<double>& dens, vector<double>& vel, vector<double>& pres, double adiabat);
 void compute_sound_speed (int N, double adiabat, vector<double> dens, vector<double> pres, vector<double>& speed_res);

@@ -1,12 +1,8 @@
 #include <string>
-#include "variables.hpp"
 #include <vector>
-// #include <Eigen/Dense>
+#include "variables.hpp"
 
-// using Eigen::MatrixXd;
-// using Eigen::VectorXd;
 using namespace std;
-
 
 #ifndef IOF_INCLUDED
 #define IOF_INCLUDED

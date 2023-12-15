@@ -6,7 +6,6 @@
 
 #include "headers/iof.hpp"
 #include "headers/variables.hpp"
-#include "headers/de_allocate.hpp"
 
 using namespace std;
 
@@ -146,12 +145,8 @@ void HLL_method (int N, double adiabat, vector<vector<double>>& u, vector<vector
 
 // Main function loop
 
-    // int count = 0;
-
     while (t <= time_res)
     {
-        // count += 1;
-
     // The input of the function was u and F, transform them into primitive variables and place them
     // in vectors created here in advance
         cons2prim (N, u, F, dens, vel, pres, adiabat);
@@ -162,9 +157,8 @@ void HLL_method (int N, double adiabat, vector<vector<double>>& u, vector<vector
         dt = Courant * dx / v_max;
     
     // Calculate the speed of wave propagation on the left and right
-        for (size_t i = 1; i < N; ++i) //{
+        for (size_t i = 1; i < N; ++i)
             compute_wave_speed (vel[i - 1], vel[i], s_vel[i - 1], s_vel[i], D_L[i], D_R[i]);
-            // cout << D_L[i] << " " << D_R[i] << '\n';}
 
     // Loop to calculate left and right fluxes to calculate flux across a cell boundary
         for (size_t j = 1; j < N; ++j)
@@ -180,7 +174,7 @@ void HLL_method (int N, double adiabat, vector<vector<double>>& u, vector<vector
             
             for (size_t k = 0; k < 3; ++k)
             {
-                if (D_L[j] > 0) // ((D_L[j] >= 0) && (D_R[j] > 0))
+                if (D_L[j] > 0)
                 {
                     F_star1[k][j] = F_L[k];
                 }
@@ -189,12 +183,11 @@ void HLL_method (int N, double adiabat, vector<vector<double>>& u, vector<vector
                     F_star1[k][j] = (-D_L[j] * F_R[k] + D_R[j] * F_L[k] + D_L[j] * D_R[j] * \
                                     (u[k][j] -  u[k][j - 1])) / (D_R[j] - D_L[j]);
                 }
-                else if (D_R[j] < 0) // ((D_L[j] < 0) && (D_R[j] <= 0)) 
+                else if (D_R[j] < 0)
                 {
                     F_star1[k][j] = F_R[k];
                 }
             }
-            // cout << "F*_1[0][" << j << "] = " << F_star1[0][j] << ", F*_1[1][" << j << "] = " << F_star1[1][j] << ", F*_1[2][" << j << "] = " << F_star1[2][j] << '\n';
         }
 
     // Similar actions for the case when the left border is [i] and the right border is [i+1]
@@ -214,7 +207,7 @@ void HLL_method (int N, double adiabat, vector<vector<double>>& u, vector<vector
             
             for (size_t k = 0; k < 3; ++k)
             {
-                if (D_L[j] > 0) // ((D_L[j] >= 0) && (D_R[j] > 0)) 
+                if (D_L[j] > 0)
                 {
                     F_star2[k][j] = F_L[k];
                 }
@@ -223,20 +216,17 @@ void HLL_method (int N, double adiabat, vector<vector<double>>& u, vector<vector
                     F_star2[k][j] = (-D_L[j] * F_R[k] + D_R[j] * F_L[k] + D_L[j] * D_R[j] * \
                                     (u[k][j + 1] -  u[k][j])) / (D_R[j] - D_L[j]);
                 }
-                else if (D_R[j] < 0) // ((D_L[j] < 0) && (D_R[j] <= 0))
+                else if (D_R[j] < 0)
                 {
                     F_star2[k][j] = F_R[k];
                 }
             }
-            // cout << "F*_2[0][" << j << "] = " << F_star2[0][j] << ", F*_2[1][" << j << "] = " << F_star2[1][j] << ", F*_2[2][" << j << "] = " << F_star2[2][j] << '\n';
         }
         
     // Application of the Harten, Lax, van Leer scheme    
-        for (size_t j = 1; j < N - 1; ++j){
-            for (size_t k = 0; k < 3; ++k){
+        for (size_t j = 1; j < N - 1; ++j)
+            for (size_t k = 0; k < 3; ++k)
                 tmp_u[k][j] =  u[k][j] - dt / dx * (F_star2[k][j] - F_star1[k][j]);
-                // cout << tmp_u[0][j] << '\n'; 
-                }}
 
     // Updating BC
         for (size_t k = 0; k < 3; ++k)
