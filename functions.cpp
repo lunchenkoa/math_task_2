@@ -97,7 +97,7 @@ void compute_wave_speed (double vel_L, double vel_R, double s_vel_L, double s_ve
     D_R = max(vel_L, vel_R) + max(s_vel_L, s_vel_R);
 }
 
-void HLL_method (int N, double adiabat, vector<vector<double>> u, vector<vector<double>> F, \
+void HLL_method (int N, double adiabat, vector<vector<double>>& u, vector<vector<double>>& F, \
                  double Courant)
 {
     double t = 0.0, dt = 0.0;
@@ -162,8 +162,9 @@ void HLL_method (int N, double adiabat, vector<vector<double>> u, vector<vector<
         dt = Courant * dx / v_max;
     
     // Calculate the speed of wave propagation on the left and right
-        for (size_t i = 1; i < N; ++i)
+        for (size_t i = 1; i < N; ++i) //{
             compute_wave_speed (vel[i - 1], vel[i], s_vel[i - 1], s_vel[i], D_L[i], D_R[i]);
+            // cout << D_L[i] << " " << D_R[i] << '\n';}
 
     // Loop to calculate left and right fluxes to calculate flux across a cell boundary
         for (size_t j = 1; j < N; ++j)
@@ -193,7 +194,7 @@ void HLL_method (int N, double adiabat, vector<vector<double>> u, vector<vector<
                     F_star1[k][j] = F_R[k];
                 }
             }
-            cout << "F*_1[0][" << j << "] = " << F_star1[0][j] << ", F*_1[1][" << j << "] = " << F_star1[1][j] << ", F*_1[2][" << j << "] = " << F_star1[2][j] << '\n';
+            // cout << "F*_1[0][" << j << "] = " << F_star1[0][j] << ", F*_1[1][" << j << "] = " << F_star1[1][j] << ", F*_1[2][" << j << "] = " << F_star1[2][j] << '\n';
         }
 
     // Similar actions for the case when the left border is [i] and the right border is [i+1]
@@ -231,9 +232,11 @@ void HLL_method (int N, double adiabat, vector<vector<double>> u, vector<vector<
         }
         
     // Application of the Harten, Lax, van Leer scheme    
-        for (size_t j = 1; j < N - 1; ++j)
-            for (size_t k = 0; k < 3; ++k)
+        for (size_t j = 1; j < N - 1; ++j){
+            for (size_t k = 0; k < 3; ++k){
                 tmp_u[k][j] =  u[k][j] - dt / dx * (F_star2[k][j] - F_star1[k][j]);
+                // cout << tmp_u[0][j] << '\n'; 
+                }}
 
     // Updating BC
         for (size_t k = 0; k < 3; ++k)

@@ -57,8 +57,16 @@ textstr = '\n'.join((
     r'$\rho_L=%.1f$, $v_L=%.1f$, $p_L=%.1f,$' % (rho_L, v_L, p_L, ),
     r'$\rho_R=%.1f$, $v_R=%.1f$, $p_R=%.1f.$' % (rho_R, v_R, p_R, )))
 
+N = 320
+C = 0.9
+
+textpar = '\n'.join((
+    r'Parameters:',
+    r'$N=%i$, $C=%.1f$' % (N, C, )))
+
 fig.text(0, 1.4, textstr, transform=ax1.transAxes, fontsize=9.5, verticalalignment='top')
+fig.text(0.4, 1.275, textpar, transform=ax1.transAxes, fontsize=9.5, verticalalignment='top')
 fig.legend(handles=[line1, line2, line3, line4], fontsize=8.5, loc='upper right', bbox_to_anchor=(0.915, 1), frameon=False)
 
-plt.show()
-# plt.savefig("./graphs/solution" + res_num + ".png")
+# plt.show()
+plt.savefig("./solution/solution" + res_num + "_N" + str(N) + "_C" + str(C) + ".png")
