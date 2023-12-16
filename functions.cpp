@@ -104,17 +104,17 @@ void HLL_method (int N, double adiabat, vector<vector<double>>& u, vector<vector
 
 // Creating auxiliary arrays
 
-    vector<vector<double>> tmp_u, F_star1, F_star2;
+    vector<vector<double>> tmp_u, F_star; //, F_star2;
 
     tmp_u.resize(3);
-    F_star1.resize(3);
-    F_star2.resize(3);
+    F_star.resize(3);
+    // F_star2.resize(3);
 
     for (size_t var = 0; var < 3; ++var)
     {
         tmp_u[var].resize(N);       // the same size as the two-dimensional vector u[][]
-        F_star1[var].resize(N + 1); // (N + 1) is the number of grid nodes
-        F_star2[var].resize(N + 1); 
+        F_star[var].resize(N + 1); // (N + 1) is the number of grid nodes
+        // F_star2[var].resize(N + 1); 
     }
 
 // Setting boundary conditions (BC)
@@ -176,57 +176,57 @@ void HLL_method (int N, double adiabat, vector<vector<double>>& u, vector<vector
             {
                 if (D_L[j] > 0)
                 {
-                    F_star1[k][j] = F_L[k];
+                    F_star[k][j] = F_L[k];
                 }
                 else if ((D_L[j] <= 0) && (D_R[j] >= 0))
                 {
-                    F_star1[k][j] = (-D_L[j] * F_R[k] + D_R[j] * F_L[k] + D_L[j] * D_R[j] * \
+                    F_star[k][j] = (-D_L[j] * F_R[k] + D_R[j] * F_L[k] + D_L[j] * D_R[j] * \
                                     (u[k][j] -  u[k][j - 1])) / (D_R[j] - D_L[j]);
                 }
                 else if (D_R[j] < 0)
                 {
-                    F_star1[k][j] = F_R[k];
+                    F_star[k][j] = F_R[k];
                 }
             }
         }
 
-    // Similar actions for the case when the left border is [i] and the right border is [i+1]
-        for (size_t i = 1; i < N; ++i)
-            compute_wave_speed (vel[i], vel[i + 1], s_vel[i], s_vel[i + 1], D_L[i], D_R[i]);
+    // // Similar actions for the case when the left border is [i] and the right border is [i+1]
+    //     for (size_t i = 1; i < N; ++i)
+    //         compute_wave_speed (vel[i], vel[i + 1], s_vel[i], s_vel[i + 1], D_L[i], D_R[i]);
 
-        for (size_t j = 1; j < N; ++j)
-        {
-            F_L[0] = dens[j] * vel[j];
-            F_L[1] = dens[j] * pow(vel[j], 2) +  pres[j];
-            F_L[2] = pres[j] * vel[j] / (adiabat - 1) + dens[j] * pow( vel[j], 3) / 2 + pres[j] * vel[j];
+    //     for (size_t j = 1; j < N; ++j)
+    //     {
+    //         F_L[0] = dens[j] * vel[j];
+    //         F_L[1] = dens[j] * pow(vel[j], 2) +  pres[j];
+    //         F_L[2] = pres[j] * vel[j] / (adiabat - 1) + dens[j] * pow( vel[j], 3) / 2 + pres[j] * vel[j];
                
-            F_R[0] = dens[j + 1] * vel[j + 1];
-            F_R[1] = dens[j + 1] * pow(vel[j + 1], 2) +  pres[j + 1];
-            F_R[2] = pres[j + 1] * vel[j + 1] / (adiabat - 1) + dens[j + 1] * \
-                     pow(vel[j + 1], 3) / 2 + pres[j + 1] * vel[j + 1];
+    //         F_R[0] = dens[j + 1] * vel[j + 1];
+    //         F_R[1] = dens[j + 1] * pow(vel[j + 1], 2) +  pres[j + 1];
+    //         F_R[2] = pres[j + 1] * vel[j + 1] / (adiabat - 1) + dens[j + 1] * \
+    //                  pow(vel[j + 1], 3) / 2 + pres[j + 1] * vel[j + 1];
             
-            for (size_t k = 0; k < 3; ++k)
-            {
-                if (D_L[j] > 0)
-                {
-                    F_star2[k][j] = F_L[k];
-                }
-                else if ((D_L[j] <= 0) && (D_R[j] >= 0))
-                {
-                    F_star2[k][j] = (-D_L[j] * F_R[k] + D_R[j] * F_L[k] + D_L[j] * D_R[j] * \
-                                    (u[k][j + 1] -  u[k][j])) / (D_R[j] - D_L[j]);
-                }
-                else if (D_R[j] < 0)
-                {
-                    F_star2[k][j] = F_R[k];
-                }
-            }
-        }
+    //         for (size_t k = 0; k < 3; ++k)
+    //         {
+    //             if (D_L[j] > 0)
+    //             {
+    //                 F_star2[k][j] = F_L[k];
+    //             }
+    //             else if ((D_L[j] <= 0) && (D_R[j] >= 0))
+    //             {
+    //                 F_star2[k][j] = (-D_L[j] * F_R[k] + D_R[j] * F_L[k] + D_L[j] * D_R[j] * \
+    //                                 (u[k][j + 1] -  u[k][j])) / (D_R[j] - D_L[j]);
+    //             }
+    //             else if (D_R[j] < 0)
+    //             {
+    //                 F_star2[k][j] = F_R[k];
+    //             }
+    //         }
+    //     }
         
     // Application of the Harten, Lax, van Leer scheme    
         for (size_t j = 1; j < N - 1; ++j)
             for (size_t k = 0; k < 3; ++k)
-                tmp_u[k][j] =  u[k][j] - dt / dx * (F_star2[k][j] - F_star1[k][j]);
+                tmp_u[k][j] =  u[k][j] - dt / dx * (F_star[k][j + 1] - F_star[k][j]);
 
     // Updating BC
         for (size_t k = 0; k < 3; ++k)
