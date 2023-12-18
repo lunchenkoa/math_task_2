@@ -8,7 +8,7 @@
 			"args": [
 				"-fdiagnostics-color=always",
 				"-g",
-				"${file}", "functions.cpp", "iof.cpp", "de_allocate.cpp",
+				"${file}", "functions.cpp", "iof.cpp", "./headers/*.hpp",
 				"-o",
 				"${fileDirname}/${fileBasenameNoExtension}"
 			],

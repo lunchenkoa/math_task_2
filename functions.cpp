@@ -117,14 +117,6 @@ void HLL_method (int N, double adiabat, vector<vector<double>>& u, vector<vector
         // F_star2[var].resize(N + 1); 
     }
 
-// Setting boundary conditions (BC)
-
-    for (size_t k = 0; k < 3; ++k)
-    {
-        tmp_u[k][0] = u[k][0];
-        tmp_u[k][N - 1] = u[k][N - 1];
-    }
-
 // Creating vectors to store wave propagation speeds (D_L, D_R), sound speed (s_vel) and flows (F_L, F_R)
     
     vector<double> D_L, D_R, s_vel, F_L, F_R;
@@ -145,6 +137,7 @@ void HLL_method (int N, double adiabat, vector<vector<double>>& u, vector<vector
 
 // Main function loop
 
+    int kh = 0;
     while (t <= time_res)
     {
     // The input of the function was u and F, transform them into primitive variables and place them
@@ -190,38 +183,13 @@ void HLL_method (int N, double adiabat, vector<vector<double>>& u, vector<vector
             }
         }
 
-    // // Similar actions for the case when the left border is [i] and the right border is [i+1]
-    //     for (size_t i = 1; i < N; ++i)
-    //         compute_wave_speed (vel[i], vel[i + 1], s_vel[i], s_vel[i + 1], D_L[i], D_R[i]);
+    // Setting boundary conditions (BC)
 
-    //     for (size_t j = 1; j < N; ++j)
-    //     {
-    //         F_L[0] = dens[j] * vel[j];
-    //         F_L[1] = dens[j] * pow(vel[j], 2) +  pres[j];
-    //         F_L[2] = pres[j] * vel[j] / (adiabat - 1) + dens[j] * pow( vel[j], 3) / 2 + pres[j] * vel[j];
-               
-    //         F_R[0] = dens[j + 1] * vel[j + 1];
-    //         F_R[1] = dens[j + 1] * pow(vel[j + 1], 2) +  pres[j + 1];
-    //         F_R[2] = pres[j + 1] * vel[j + 1] / (adiabat - 1) + dens[j + 1] * \
-    //                  pow(vel[j + 1], 3) / 2 + pres[j + 1] * vel[j + 1];
-            
-    //         for (size_t k = 0; k < 3; ++k)
-    //         {
-    //             if (D_L[j] > 0)
-    //             {
-    //                 F_star2[k][j] = F_L[k];
-    //             }
-    //             else if ((D_L[j] <= 0) && (D_R[j] >= 0))
-    //             {
-    //                 F_star2[k][j] = (-D_L[j] * F_R[k] + D_R[j] * F_L[k] + D_L[j] * D_R[j] * \
-    //                                 (u[k][j + 1] -  u[k][j])) / (D_R[j] - D_L[j]);
-    //             }
-    //             else if (D_R[j] < 0)
-    //             {
-    //                 F_star2[k][j] = F_R[k];
-    //             }
-    //         }
-    //     }
+        for (size_t k = 0; k < 3; ++k)
+        {
+            tmp_u[k][0] = u[k][0];
+            tmp_u[k][N - 1] = u[k][N - 1];
+        }
         
     // Application of the Harten, Lax, van Leer scheme    
         for (size_t j = 1; j < N - 1; ++j)
@@ -231,15 +199,16 @@ void HLL_method (int N, double adiabat, vector<vector<double>>& u, vector<vector
     // Updating BC
         for (size_t k = 0; k < 3; ++k)
         {
-            u[k][0] = tmp_u[k][0];
-
             for (size_t j = 1; j < N - 1; ++j)
-                u[k][j] = tmp_u[k][j - 1];
-
-            u[k][N - 1] = tmp_u[k][N - 1];
+                u[k][j] = tmp_u[k][j];
         }
 
     // Updating the time counter
         t += dt;
+
+        kh++;
+
+        // if (kh > 0)
+        //    break;
     }
 }
