@@ -68,5 +68,5 @@ fig.text(0, 1.4, textstr, transform=ax1.transAxes, fontsize=9.5, verticalalignme
 fig.text(0.4, 1.275, textpar, transform=ax1.transAxes, fontsize=9.5, verticalalignment='top')
 fig.legend(handles=[line1, line2, line3, line4], fontsize=8.5, loc='upper right', bbox_to_anchor=(0.915, 1), frameon=False)
 
-# plt.show()
-plt.savefig("./solution/solution" + res_num + "_N" + str(N) + "_C" + str(C) + ".png")
+plt.show()
+# plt.savefig("./solution/solution" + res_num + "_N" + str(N) + "_C" + str(C) + ".png")
